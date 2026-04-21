@@ -73,7 +73,7 @@ const UI = (() => {
     $toastContainer = document.getElementById('toast-container');
 
     // Notification sound
-    notificationAudio = new Audio('./assets/sounds/notification.mp3');
+    notificationAudio = new Audio('./assets/sounds/notification.wav');
     notificationAudio.volume = 0.5;
     notificationAudio.preload = 'auto';
 
