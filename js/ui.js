@@ -26,6 +26,7 @@ const UI = (() => {
     $toastContainer;
 
   // State
+  let _activeAudio = null;
   let _replyToId = null;
   let _editingMessageId = null;
   let _notificationAudio = null;
@@ -382,16 +383,57 @@ const UI = (() => {
         const audioPreset = document.createElement('div');
         audioPreset.className = 'message-audio-preset';
         const audioInfo = Presets.findAudio(msg.content);
+        const audioDisplayName = audioInfo
+          ? audioInfo.name
+          : msg.content.replace(/\.[^.]+$/, '').replace(/[_\-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
         audioPreset.innerHTML = `
-          <button class="audio-play-btn" aria-label="Reproducir audio">
+          <button class="audio-play-btn" aria-label="Reproducir">
             <i class="fa-solid fa-play"></i>
           </button>
-          <span class="audio-name">${_escapeHtml(audioInfo ? audioInfo.name : msg.content)}</span>
+          <span class="audio-name">${_escapeHtml(audioDisplayName)}</span>
         `;
+
         audioPreset.querySelector('.audio-play-btn').addEventListener('click', (e) => {
           e.stopPropagation();
-          _playAudioPreset(msg.content);
+          const btn = e.currentTarget;
+
+          // Si este audio ya está activo → pausar y resetear
+          if (_activeAudio && _activeAudio._filename === msg.content) {
+            _activeAudio.pause();
+            _activeAudio.currentTime = 0;
+            _activeAudio = null;
+            btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            return;
+          }
+
+          // Detener y resetear cualquier otro audio activo
+          if (_activeAudio) {
+            _activeAudio.pause();
+            _activeAudio.currentTime = 0;
+            if (_activeAudio._btn) {
+              _activeAudio._btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            }
+            _activeAudio = null;
+          }
+
+          // Reproducir este audio
+          const audio = new Audio(Presets.getAudioPath(msg.content));
+          audio._filename = msg.content;
+          audio._btn = btn;
+          audio.volume = 0.8;
+          _activeAudio = audio;
+
+          btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+
+          audio.addEventListener('ended', () => {
+            btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            _activeAudio = null;
+          });
+
+          audio.play().catch(() => {});
         });
+
         bubble.appendChild(audioPreset);
         break;
     }
@@ -429,6 +471,13 @@ const UI = (() => {
     }
 
     return wrapper;
+  }
+  
+  function _formatAudioFilename(filename) {
+    return filename
+      .replace(/\.[^.]+$/, '')        // quitar extensión
+      .replace(/[_\-]+/g, ' ')        // guiones/underscores → espacios
+      .replace(/\b\w/g, c => c.toUpperCase()); // capitalizar cada palabra
   }
 
   // ─── Context Menu ──────────────────────
@@ -889,8 +938,34 @@ const UI = (() => {
   }
 
   function _playAudioPreset(filename) {
+    // Si hay un audio activo, detenerlo siempre
+    if (_activeAudio) {
+      _activeAudio.pause();
+      _activeAudio.currentTime = 0;
+      // Restaurar ícono del botón que lo inició
+      if (_activeAudio._btn) {
+        _activeAudio._btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+      }
+      const wasMe = _activeAudio._filename === filename;
+      _activeAudio = null;
+      if (wasMe) return;
+    }
+
     const audio = new Audio(Presets.getAudioPath(filename));
-    audio.play().catch(() => showToast('No se pudo reproducir el audio'));
+    audio._filename = filename;
+    audio.volume = 0.8;
+    _activeAudio = audio;
+
+    audio.addEventListener('ended', () => {
+      if (_activeAudio && _activeAudio._filename === filename) {
+        if (_activeAudio._btn) {
+          _activeAudio._btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        }
+        _activeAudio = null;
+      }
+    });
+
+    audio.play().catch(() => {});
   }
 
   // ─── Toast ─────────────────────────────
