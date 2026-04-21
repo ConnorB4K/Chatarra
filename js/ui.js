@@ -77,20 +77,18 @@ const UI = (() => {
     notificationAudio.volume = 0.5;
     notificationAudio.preload = 'auto';
 
-    // Desbloquear audio en primer toque/clic (política autoplay del navegador)
+    // Desbloquear en primer gesto del usuario
     const unlockAudio = () => {
         if (audioUnlocked) return;
-        notificationAudio.play().then(() => {
-            notificationAudio.pause();
-            notificationAudio.currentTime = 0;
-            audioUnlocked = true;
-        }).catch(() => {
-            // Fallback: AudioContext
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                ctx.resume().then(() => { audioUnlocked = true; ctx.close(); });
-            } catch(e) {}
-        });
+        audioUnlocked = true;
+        // Reproducir y pausar inmediatamente para "calentar" el contexto de audio
+        const silentPlay = notificationAudio.play();
+        if (silentPlay) {
+            silentPlay.then(() => {
+                notificationAudio.pause();
+                notificationAudio.currentTime = 0;
+            }).catch(() => {});
+        }
     };
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('touchstart', unlockAudio, { once: true });
