@@ -297,7 +297,7 @@ const UI = (() => {
 
     // Play sound if it's from someone else
     if (msg.uid !== Auth.getUid()) {
-      _playNotificationSound();
+      playNotificationSound();
     }
   }
 
