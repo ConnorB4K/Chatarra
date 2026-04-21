@@ -1,2 +1,0 @@
-/* Placeholder: Replace this file with an actual notification sound (MP3) */
-/* File: assets/sounds/notification.mp3 */
