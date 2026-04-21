@@ -6,13 +6,13 @@
 // ─── Firebase Configuration ─────────────
 // Replace these values with your own Firebase project config
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  databaseURL: 'https://YOUR_PROJECT-default-rtdb.firebaseio.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: "AIzaSyBkc6E4cxhKD45DbJjomP8DK1JBzSGIlo8",
+  authDomain: "chatarra-f27ad.firebaseapp.com",
+  databaseURL: "https://chatarra-f27ad-default-rtdb.firebaseio.com",
+  projectId: "chatarra-f27ad",
+  storageBucket: "chatarra-f27ad.firebasestorage.app",
+  messagingSenderId: "92761505044",
+  appId: "1:92761505044:web:8e81812baf20c9e01dd601"
 };
 
 // Initialize Firebase
