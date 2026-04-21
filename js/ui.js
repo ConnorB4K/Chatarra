@@ -77,18 +77,9 @@ const UI = (() => {
     notificationAudio.volume = 0.5;
     notificationAudio.preload = 'auto';
 
-    // Desbloquear en primer gesto del usuario
     const unlockAudio = () => {
       if (audioUnlocked) return;
       audioUnlocked = true;
-
-      // Calentar el contexto de audio del navegador con un play silencioso
-      notificationAudio.volume = 0;
-      notificationAudio.play().then(() => {
-        notificationAudio.pause();
-        notificationAudio.currentTime = 0;
-        notificationAudio.volume = 0.5; // Restaurar volumen
-      }).catch(() => {});
     };
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('touchstart', unlockAudio, { once: true });
