@@ -231,6 +231,7 @@ a {
 .lobby-input-group {
   display: flex;
   gap: var(--space-sm);
+  align-items: stretch;
 }
 
 .lobby-input-group input {
@@ -257,6 +258,13 @@ a {
 
 .lobby-input-group input:focus {
   border-color: var(--primary-400);
+}
+
+.lobby-input-group .btn-icon {
+    width: 48px;
+    height: auto;
+    align-self: stretch;
+    border-radius: var(--radius-md);
 }
 
 .btn {
@@ -444,19 +452,36 @@ a {
 
 /* ---------- Chat Messages Area ---------- */
 .chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: var(--space-lg) var(--space-md);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  background:
-    linear-gradient(var(--bg-chat-tint), var(--bg-chat-tint)),
-    url('../assets/background/back.jpg') center / cover no-repeat;
-  background-attachment: local;
-  scroll-behavior: smooth;
-  overscroll-behavior: contain;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--space-lg) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background-color: var(--bg-chat);
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    position: relative; /* necesario para el ::before */
+}
+
+/* Fondo de pantalla como capa separada */
+.chat-messages::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('../assets/background/back.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.18; /* ajusta entre 0.1 y 0.3 según tu gusto */
+    pointer-events: none;
+    z-index: 0;
+}
+
+.chat-messages > * {
+    position: relative;
+    z-index: 1;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -965,37 +990,35 @@ a {
 
 .sticker-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: var(--space-md);
   padding: var(--space-lg);
 }
 
 .sticker-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 1;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--duration-fast) ease;
-  background: var(--slate-50);
-  padding: var(--space-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) ease;
+    background: transparent;
+    padding: 0;
 }
-
 .sticker-item:hover {
-  background: var(--primary-50);
-  transform: scale(1.08);
+    background: var(--primary-50);
+    transform: scale(1.08);
 }
-
 .sticker-item img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
 }
 
 .sticker-item .sticker-placeholder {
-  width: 64px;
-  height: 64px;
+  width: 130px;
+  height: 130px;
   border-radius: var(--radius-sm);
   background: var(--slate-200);
   display: flex;
@@ -1372,10 +1395,6 @@ a {
 
   .message-wrapper {
     max-width: 65%;
-  }
-
-  .sticker-grid {
-    grid-template-columns: repeat(4, 1fr);
   }
 
   .lobby-actions {
@@ -1793,13 +1812,46 @@ a {
 
 /* ---------- Dark theme desktop backgrounds ---------- */
 @media (min-width: 768px) {
-  body[data-theme="oscuro"] {
+  [data-theme="oscuro"] body {
     background: linear-gradient(135deg, #0a0a12 0%, #1e1840 50%, #0e0e14 100%);
   }
-  body[data-theme="whatsapp-dark"] {
+  [data-theme="whatsapp-dark"] body {
     background: linear-gradient(135deg, #0a0f14 0%, #0a2f24 50%, #0b141a 100%);
   }
-  body[data-theme="medianoche"] {
+  [data-theme="medianoche"] body {
     background: linear-gradient(135deg, #06060f 0%, #141c3d 50%, #0a0a15 100%);
   }
+}
+
+:root,
+[data-theme="default"],
+[data-theme="whatsapp"],
+[data-theme="windows11"],
+[data-theme="rosa"] {
+    color-scheme: light;
+}
+
+[data-theme="oscuro"],
+[data-theme="whatsapp-dark"],
+[data-theme="medianoche"] {
+    color-scheme: dark;
+}
+
+@media (max-width: 767px) {
+    .message-wrapper.own .message-bubble {
+        background: var(--bg-bubble-own) !important;
+        color: var(--text-bubble-own) !important;
+    }
+    .message-wrapper.other .message-bubble {
+        background: var(--bg-bubble-other) !important;
+        color: var(--text-bubble-other) !important;
+    }
+    .message-wrapper.own .audio-play-btn {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: #fff !important;
+    }
+    .message-wrapper.other .audio-play-btn {
+        background: var(--primary-100) !important;
+        color: var(--primary-600) !important;
+    }
 }

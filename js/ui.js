@@ -33,6 +33,8 @@ const UI = (() => {
   let _renderedMessageIds = new Set();
   let _lastRenderedMsg = null;
   let $themeModal = null;
+  let _isMuted = localStorage.getItem('chatarra_muted') === 'true';
+  let _audioUnlocked = false;
 
   // ─── Theme Definitions ─────────────────
   const THEMES = [
@@ -73,6 +75,23 @@ const UI = (() => {
     // Notification sound
     _notificationAudio = new Audio('./assets/sounds/notification.mp3');
     _notificationAudio.volume = 0.5;
+    _notificationAudio.preload = 'auto';
+
+    // Unlock audio on first user interaction (browser autoplay policy)
+    let audioUnlocked = false;
+    const unlockAudio = () => {
+        if (audioUnlocked) return;
+        // Crear y reproducir silenciosamente un AudioContext para desbloquear
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        ctx.resume().then(() => {
+            audioUnlocked = true;
+            ctx.close();
+        });
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+    };
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
 
     // Set up event listeners
     _setupLobbyEvents();
@@ -761,6 +780,48 @@ const UI = (() => {
       _closeOptionsMenu();
       _openThemeModal();
     });
+
+    // Mute/unmute toggle
+    const soundBtn = document.getElementById('btn-toggle-sound');
+    _updateSoundBtn(soundBtn);
+    soundBtn.addEventListener('click', () => {
+      _isMuted = !_isMuted;
+      localStorage.setItem('chatarra_muted', _isMuted);
+      _updateSoundBtn(soundBtn);
+      showToast(_isMuted ? 'Sonido desactivado' : 'Sonido activado');
+    });
+  }
+
+  const toggleSoundBtn = document.getElementById('btn-toggle-sound');
+
+  function updateSoundBtn() {
+      if (isMuted) {
+          toggleSoundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> Sonido Desactivado';
+          toggleSoundBtn.style.color = 'var(--danger)';
+      } else {
+          toggleSoundBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> Sonido Activado';
+          toggleSoundBtn.style.color = '';
+      }
+  }
+
+  // Aplicar estado visual al abrir el menú
+  document.getElementById('btn-options').addEventListener('click', updateSoundBtn);
+
+  // Toggle al hacer clic
+  toggleSoundBtn.addEventListener('click', () => {
+      isMuted = !isMuted;
+      localStorage.setItem('chatarra-muted', isMuted);
+      updateSoundBtn();
+      closeOptionsMenu();
+      showToast(isMuted ? 'Sonido desactivado' : 'Sonido activado');
+  });
+
+  function _updateSoundBtn(btn) {
+    if (_isMuted) {
+      btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> Sonido: Desactivado';
+    } else {
+      btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> Sonido: Activado';
+    }
   }
 
   function _closeOptionsMenu() {
@@ -828,6 +889,7 @@ const UI = (() => {
   // ─── Sound Effects ────────────────────
 
   function _playNotificationSound() {
+    if (_isMuted) return;
     if (_notificationAudio) {
       _notificationAudio.currentTime = 0;
       _notificationAudio.play().catch(() => {});
@@ -1034,9 +1096,9 @@ const UI = (() => {
 
   function applyTheme(themeId) {
     if (themeId === 'default') {
-      document.body.removeAttribute('data-theme');
+      document.documentElement.removeAttribute('data-theme');
     } else {
-      document.body.setAttribute('data-theme', themeId);
+      document.documentElement.setAttribute('data-theme', themeId);
     }
     localStorage.setItem('chatarra_theme', themeId);
   }
@@ -1044,7 +1106,7 @@ const UI = (() => {
   function loadSavedTheme() {
     const saved = localStorage.getItem('chatarra_theme');
     if (saved && saved !== 'default') {
-      document.body.setAttribute('data-theme', saved);
+      document.documentElement.setAttribute('data-theme', saved);
     }
   }
 
