@@ -1,0 +1,9 @@
+Audio Preset Placeholders
+=========================
+Place your audio files here with these exact filenames:
+
+- risas.mp3     (Risas)
+- aplausos.mp3  (Aplausos)
+- suspense.mp3  (Suspense)
+
+Recommended: MP3 format, short clips (1-5 seconds).

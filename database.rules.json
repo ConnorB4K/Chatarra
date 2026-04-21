@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomCode": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "messages": {
+          "$messageId": {
+            ".write": "auth != null",
+            ".validate": "newData.hasChildren(['uid', 'type', 'content', 'timestamp'])"
+          }
+        },
+        "members": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        }
+      }
+    }
+  }
+}

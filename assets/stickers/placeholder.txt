@@ -1,0 +1,12 @@
+Sticker Placeholders
+====================
+Place your sticker image files here with these exact filenames:
+
+- laugh.webp    (Risa)
+- thumbsup.webp (Aprobado)
+- heart.webp    (Corazón)
+- cry.webp      (Llorar)
+- wow.webp      (Sorpresa)
+- angry.webp    (Enojo)
+
+Recommended: WebP or PNG format, 256x256 px or larger.
