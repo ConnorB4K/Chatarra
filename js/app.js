@@ -44,6 +44,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 6. Show last room shortcut if available
     UI.tryRejoinLastRoom();
+
+    // 7. Auto-rejoin last room if nickname and room are saved
+    const lastRoom = Auth.getLastRoom();
+    if (lastRoom && Auth.hasNickname() && Rooms.isValidCode(lastRoom)) {
+      try {
+        const exists = await Rooms.joinRoom(lastRoom);
+        if (exists) {
+          await UI._enterRoom(lastRoom); // ← ver nota abajo
+        } else {
+          Auth.clearLastRoom();
+        }
+      } catch (err) {
+        console.error('Auto-rejoin failed:', err);
+      }
+    }
   } catch (error) {
     console.error('App initialization failed:', error);
     UI.showToast('Error al iniciar la aplicación');

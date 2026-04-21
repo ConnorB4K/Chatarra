@@ -75,7 +75,7 @@ const UI = (() => {
 
     // Notification sound
     _notificationAudio = new Audio('./assets/sounds/notification.wav');
-    _notificationAudio.volume = 0.5;
+    _notificationAudio.volume = 0.15;
     _notificationAudio.preload = 'auto';
 
     const unlockAudio = () => {
@@ -1176,5 +1176,6 @@ const UI = (() => {
     getReplyToId,
     applyTheme,
     loadSavedTheme,
+    _enterRoom,
   };
 })();
