@@ -81,7 +81,14 @@ const UI = (() => {
     const unlockAudio = () => {
       if (audioUnlocked) return;
       audioUnlocked = true;
-      // Solo marcar como desbloqueado; el play real sucederá cuando llegue un mensaje
+
+      // Calentar el contexto de audio del navegador con un play silencioso
+      notificationAudio.volume = 0;
+      notificationAudio.play().then(() => {
+        notificationAudio.pause();
+        notificationAudio.currentTime = 0;
+        notificationAudio.volume = 0.5; // Restaurar volumen
+      }).catch(() => {});
     };
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('touchstart', unlockAudio, { once: true });
@@ -881,19 +888,15 @@ const UI = (() => {
 
   // ─── Sound Effects ────────────────────
 
-  function _playNotificationSound() {
-    if (!soundEnabled || !audioUnlocked) return;
+  function playNotificationSound() {
+    if (isMuted) return;
+    if (!notificationAudio) return;
+    if (!audioUnlocked) return; // ← AGREGAR esta guarda
 
-    // Reiniciar siempre antes de reproducir
     notificationAudio.currentTime = 0;
-
-    const playPromise = notificationAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        // Silencia el error — el navegador puede bloquear autoplay
-        console.warn('Notification sound blocked:', err);
-      });
-    }
+    notificationAudio.play().catch(() => {
+      // Autoplay bloqueado — ignorar silenciosamente
+    });
   }
 
   function _playAudioPreset(filename) {
