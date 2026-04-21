@@ -459,22 +459,25 @@ a {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    background-color: var(--bg-chat);
     scroll-behavior: smooth;
     overscroll-behavior: contain;
-    position: relative; /* necesario para el ::before */
+    position: relative;
+    background-color: var(--bg-chat);
 }
 
-/* Fondo de pantalla como capa separada */
+/* Fondo estático que llena todo el área sin efectos */
 .chat-messages::before {
     content: '';
-    position: absolute;
-    inset: 0;
+    position: fixed;        /* ← fixed en lugar de absolute = no hace scroll */
+    top: var(--header-height);
+    bottom: var(--input-bar-height);
+    left: 0;
+    right: 0;
     background-image: url('../assets/background/back.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 0.18; /* ajusta entre 0.1 y 0.3 según tu gusto */
+    /* Sin opacity, sin blend-mode: imagen limpia */
     pointer-events: none;
     z-index: 0;
 }
@@ -565,8 +568,12 @@ a {
 }
 
 .message-wrapper.has-tail {
-  margin-top: var(--space-sm);
+  margin-top: 10px;
 }
+
+.message-wrapper:not(.has-tail) {
+        margin-top: 2px;
+    }
 
 .message-wrapper.has-tail:first-child,
 .date-separator + .message-wrapper.has-tail {
@@ -1391,6 +1398,7 @@ a {
 
   .chat-messages {
     padding: var(--space-xl) var(--space-3xl);
+    gap: 3px;
   }
 
   .message-wrapper {
@@ -1853,5 +1861,10 @@ a {
     .message-wrapper.other .audio-play-btn {
         background: var(--primary-100) !important;
         color: var(--primary-600) !important;
+    }
+    .message-wrapper .message-bubble.sticker-bubble {
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: var(--space-xs) !important;
     }
 }

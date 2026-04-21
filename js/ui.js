@@ -73,22 +73,24 @@ const UI = (() => {
     $toastContainer = document.getElementById('toast-container');
 
     // Notification sound
-    _notificationAudio = new Audio('./assets/sounds/notification.mp3');
-    _notificationAudio.volume = 0.5;
-    _notificationAudio.preload = 'auto';
+    notificationAudio = new Audio('./assets/sounds/notification.mp3');
+    notificationAudio.volume = 0.5;
+    notificationAudio.preload = 'auto';
 
-    // Unlock audio on first user interaction (browser autoplay policy)
-    let audioUnlocked = false;
+    // Desbloquear audio en primer toque/clic (política autoplay del navegador)
     const unlockAudio = () => {
         if (audioUnlocked) return;
-        // Crear y reproducir silenciosamente un AudioContext para desbloquear
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        ctx.resume().then(() => {
+        notificationAudio.play().then(() => {
+            notificationAudio.pause();
+            notificationAudio.currentTime = 0;
             audioUnlocked = true;
-            ctx.close();
+        }).catch(() => {
+            // Fallback: AudioContext
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                ctx.resume().then(() => { audioUnlocked = true; ctx.close(); });
+            } catch(e) {}
         });
-        document.removeEventListener('click', unlockAudio);
-        document.removeEventListener('touchstart', unlockAudio);
     };
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('touchstart', unlockAudio, { once: true });
@@ -959,15 +961,6 @@ const UI = (() => {
   // ─── Notifications ────────────────────
 
   async function _initNotifications(roomCode) {
-    try {
-      // Use your VAPID key here
-      const token = await Notifications.init('YOUR_VAPID_KEY_HERE');
-      if (token) {
-        await Rooms.updateFCMToken(roomCode, Auth.getUid(), token);
-      }
-    } catch (err) {
-      console.warn('Notifications not available:', err);
-    }
   }
 
   // ─── Rejoin Shortcut ─────────────────
