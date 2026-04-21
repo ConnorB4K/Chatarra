@@ -73,13 +73,13 @@ const UI = (() => {
     $toastContainer = document.getElementById('toast-container');
 
     // Notification sound
-    notificationAudio = new Audio('./assets/sounds/notification.wav');
-    notificationAudio.volume = 0.5;
-    notificationAudio.preload = 'auto';
+    _notificationAudio = new Audio('./assets/sounds/notification.wav');
+    _notificationAudio.volume = 0.5;
+    _notificationAudio.preload = 'auto';
 
     const unlockAudio = () => {
-      if (audioUnlocked) return;
-      audioUnlocked = true;
+      if (_audioUnlocked) return;
+      _audioUnlocked = true;
     };
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('touchstart', unlockAudio, { once: true });
@@ -288,7 +288,7 @@ const UI = (() => {
 
     // Play sound if it's from someone else
     if (msg.uid !== Auth.getUid()) {
-      playNotificationSound();
+      _playNotificationSound();
     }
   }
 
@@ -879,9 +879,9 @@ const UI = (() => {
 
   // ─── Sound Effects ────────────────────
 
-  function playNotificationSound() {
-    if (isMuted) return;
-    if (!audioUnlocked) return;
+  function _playNotificationSound() {
+    if (_isMuted) return;
+    if (!_audioUnlocked) return;
 
     const sfx = new Audio('./assets/sounds/notification.wav');
     sfx.volume = 0.5;
