@@ -32,6 +32,18 @@ const UI = (() => {
   let _activeContextMenu = null;
   let _renderedMessageIds = new Set();
   let _lastRenderedMsg = null;
+  let $themeModal = null;
+
+  // ─── Theme Definitions ─────────────────
+  const THEMES = [
+    { id: 'default',        name: 'Claro',           emoji: '☀️', bg: '#f1f0f6', accent: '#6c14f0', bubble: '#6c14f0' },
+    { id: 'oscuro',          name: 'Oscuro',           emoji: '🌙', bg: '#121218', accent: '#8b5cf6', bubble: '#7c3aed' },
+    { id: 'whatsapp',        name: 'WhatsApp',         emoji: '💬', bg: '#f0f2f5', accent: '#00a884', bubble: '#d9fdd3' },
+    { id: 'whatsapp-dark',   name: 'WhatsApp Oscuro',  emoji: '🌿', bg: '#111b21', accent: '#00a884', bubble: '#005c4b' },
+    { id: 'windows11',       name: 'Windows 11',       emoji: '🪟', bg: '#f3f3f3', accent: '#0078d4', bubble: '#0078d4' },
+    { id: 'medianoche',      name: 'Medianoche',       emoji: '🌌', bg: '#0d0d1a', accent: '#4c6ef5', bubble: '#4c6ef5' },
+    { id: 'rosa',            name: 'Rosa',             emoji: '🌸', bg: '#fff5f7', accent: '#e91e63', bubble: '#e91e63' },
+  ];
 
   /**
    * Initialize UI references and event listeners.
@@ -69,6 +81,8 @@ const UI = (() => {
     _setupOptionsMenu();
     _setupEditModal();
     _setupImagePreview();
+    _setupThemeModal();
+    _setupImgBBUpload();
   }
 
   // ─── Lobby ──────────────────────────────
@@ -500,6 +514,52 @@ const UI = (() => {
     });
   }
 
+  // ─── ImgBB Image Upload ───────────────
+
+  function _setupImgBBUpload() {
+    const clipBtn = document.getElementById('btn-clip');
+    const fileInput = document.getElementById('imgbb-file-input');
+
+    clipBtn.addEventListener('click', () => {
+      if (!Media.isConfigured()) {
+        showToast('ImgBB no está configurado (API key)');
+        return;
+      }
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('Solo se permiten imágenes');
+        return;
+      }
+
+      clipBtn.classList.add('uploading');
+      showToast('Subiendo imagen...');
+
+      try {
+        const url = await Media.uploadImage(file);
+        const room = Chat.getCurrentRoom();
+        if (room) {
+          await Chat.sendMessage(room, {
+            type: 'image',
+            content: url,
+            replyTo: _replyToId,
+          });
+          _clearReply();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error al subir la imagen');
+      } finally {
+        clipBtn.classList.remove('uploading');
+        fileInput.value = '';
+      }
+    });
+  }
+
   async function _handleSend() {
     const text = $chatInput.value.trim();
     if (!text) return;
@@ -695,6 +755,12 @@ const UI = (() => {
         showToast('Apodo actualizado');
       }
     });
+
+    // Change theme
+    document.getElementById('btn-change-theme').addEventListener('click', () => {
+      _closeOptionsMenu();
+      _openThemeModal();
+    });
   }
 
   function _closeOptionsMenu() {
@@ -847,9 +913,21 @@ const UI = (() => {
   function _showRejoinShortcut(roomCode) {
     const section = document.getElementById('rejoin-section');
     const codeSpan = document.getElementById('rejoin-room-code');
+    const preview = document.getElementById('rejoin-preview');
     if (roomCode) {
       codeSpan.textContent = roomCode;
       section.style.display = 'block';
+      preview.textContent = '';
+      // Fetch last message for preview
+      Chat.getLastMessage(roomCode).then((msg) => {
+        if (msg) {
+          const text = _getPreviewText(msg);
+          const sender = msg.nickname || 'Anónimo';
+          preview.textContent = `${sender}: ${text}`;
+        } else {
+          preview.textContent = 'Sin mensajes aún';
+        }
+      });
     } else {
       section.style.display = 'none';
     }
@@ -897,11 +975,86 @@ const UI = (() => {
            d1.getFullYear() === d2.getFullYear();
   }
 
+  // ─── Theme System ─────────────────────
+
+  function _setupThemeModal() {
+    $themeModal = document.getElementById('theme-modal');
+    const grid = document.getElementById('theme-grid');
+
+    // Render theme options
+    THEMES.forEach((theme) => {
+      const option = document.createElement('div');
+      option.className = 'theme-option';
+      option.dataset.themeId = theme.id;
+
+      option.innerHTML = `
+        <div class="theme-swatch">
+          <div class="theme-swatch-bg" style="background: ${theme.bg}"></div>
+          <div class="theme-swatch-accent" style="background: ${theme.accent}"></div>
+          <div class="theme-swatch-bubble" style="background: ${theme.bubble}"></div>
+        </div>
+        <span>${theme.emoji} ${theme.name}</span>
+      `;
+
+      option.addEventListener('click', () => {
+        applyTheme(theme.id);
+        _updateThemeSelection();
+        _closeThemeModal();
+      });
+
+      grid.appendChild(option);
+    });
+
+    // Close on backdrop click
+    $themeModal.addEventListener('click', (e) => {
+      if (e.target === $themeModal) _closeThemeModal();
+    });
+
+    // Lobby theme button
+    document.getElementById('btn-lobby-theme').addEventListener('click', _openThemeModal);
+
+    _updateThemeSelection();
+  }
+
+  function _openThemeModal() {
+    $themeModal.classList.add('visible');
+    _updateThemeSelection();
+  }
+
+  function _closeThemeModal() {
+    if ($themeModal) $themeModal.classList.remove('visible');
+  }
+
+  function _updateThemeSelection() {
+    const current = localStorage.getItem('chatarra_theme') || 'default';
+    document.querySelectorAll('.theme-option').forEach((opt) => {
+      opt.classList.toggle('active', opt.dataset.themeId === current);
+    });
+  }
+
+  function applyTheme(themeId) {
+    if (themeId === 'default') {
+      document.body.removeAttribute('data-theme');
+    } else {
+      document.body.setAttribute('data-theme', themeId);
+    }
+    localStorage.setItem('chatarra_theme', themeId);
+  }
+
+  function loadSavedTheme() {
+    const saved = localStorage.getItem('chatarra_theme');
+    if (saved && saved !== 'default') {
+      document.body.setAttribute('data-theme', saved);
+    }
+  }
+
   return {
     init,
     leaveRoom,
     showToast,
     tryRejoinLastRoom,
     getReplyToId,
+    applyTheme,
+    loadSavedTheme,
   };
 })();

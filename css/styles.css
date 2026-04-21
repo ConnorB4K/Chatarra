@@ -41,6 +41,7 @@
   /* Surfaces */
   --bg-app: #f1f0f6;
   --bg-chat: #e8e6f0;
+  --bg-chat-tint: rgba(232, 230, 240, 0.88);
   --bg-surface: #ffffff;
   --bg-glass: rgba(255, 255, 255, 0.72);
   --bg-bubble-own: var(--primary-500);
@@ -179,6 +180,7 @@ a {
   padding: var(--space-xl);
   gap: var(--space-xl);
   background: linear-gradient(160deg, var(--bg-app) 0%, var(--primary-50) 100%);
+  position: relative;
 }
 
 .lobby-logo {
@@ -449,7 +451,10 @@ a {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: var(--bg-chat);
+  background:
+    linear-gradient(var(--bg-chat-tint), var(--bg-chat-tint)),
+    url('../assets/background/back.jpg') center / cover no-repeat;
+  background-attachment: local;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
@@ -813,12 +818,41 @@ a {
   flex-shrink: 0;
 }
 
+.chat-send-btn i {
+  position: relative;
+  left: -2px;
+}
+
 .chat-send-btn:hover {
   transform: scale(1.05);
 }
 
 .chat-send-btn:active {
   transform: scale(0.95);
+}
+
+/* ---------- Clip (ImgBB) Button ---------- */
+.clip-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--slate-400);
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: all var(--duration-fast) ease;
+  align-self: center;
+}
+
+.clip-btn:hover {
+  color: var(--primary-500);
+}
+
+.clip-btn.uploading {
+  animation: spin 0.8s linear infinite;
+  color: var(--primary-500);
 }
 
 /* Reply bar above input */
@@ -888,16 +922,17 @@ a {
   max-height: 340px;
   overflow-y: auto;
   transform: translateY(100%);
-  opacity: 0;
-  transition: all var(--duration-normal) var(--ease-out);
+  visibility: hidden;
+  transition: transform var(--duration-normal) var(--ease-out), visibility 0s linear var(--duration-normal);
   pointer-events: none;
   padding-bottom: 68px;
 }
 
 .presets-panel.open {
   transform: translateY(0);
-  opacity: 1;
+  visibility: visible;
   pointer-events: auto;
+  transition: transform var(--duration-normal) var(--ease-out), visibility 0s;
 }
 
 .presets-panel-header {
@@ -1412,6 +1447,60 @@ a {
   letter-spacing: 1px;
 }
 
+.rejoin-btn {
+  text-align: left;
+}
+
+.rejoin-btn-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  width: 100%;
+}
+
+.rejoin-btn-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 600;
+}
+
+.rejoin-preview {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding-left: 28px;
+  opacity: 0.8;
+}
+
+/* ---------- Lobby Theme Button ---------- */
+.lobby-theme-btn {
+  position: absolute;
+  bottom: var(--space-xl);
+  right: var(--space-xl);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  color: var(--primary-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow-md);
+  transition: all var(--duration-fast) ease;
+  z-index: 5;
+}
+
+.lobby-theme-btn:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
 /* ---------- Date Separator ---------- */
 .date-separator {
   align-self: center;
@@ -1425,9 +1514,292 @@ a {
   user-select: none;
 }
 
+/* ---------- Theme Modal ---------- */
+.theme-modal-card {
+  max-width: 440px;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+  border: 2px solid transparent;
+}
+
+.theme-option:hover {
+  background: var(--slate-100);
+}
+
+.theme-option.active {
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+}
+
+.theme-swatch {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.theme-swatch-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.theme-swatch-accent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  border-radius: 0 12px 0 0;
+}
+
+.theme-swatch-bubble {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  width: 16px;
+  height: 10px;
+  border-radius: 6px;
+}
+
+.theme-option span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.3;
+}
+
 /* ---------- Shake Animation ---------- */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20%, 60% { transform: translateX(-6px); }
   40%, 80% { transform: translateX(6px); }
+}
+
+/* ============================================
+   THEMES
+   ============================================ */
+
+/* ---------- Oscuro ---------- */
+[data-theme="oscuro"] {
+  --primary-50: #1e1840;
+  --primary-100: #2d2250;
+  --primary-300: #c4b5fd;
+  --primary-400: #a78bfa;
+  --primary-500: #8b5cf6;
+  --primary-600: #7c3aed;
+
+  --bg-app: #121218;
+  --bg-chat: #0e0e14;
+  --bg-chat-tint: rgba(14, 14, 20, 0.90);
+  --bg-surface: #1c1c28;
+  --bg-glass: rgba(28, 28, 40, 0.85);
+  --bg-bubble-own: #7c3aed;
+  --bg-bubble-other: #252538;
+  --bg-input: #1c1c28;
+
+  --text-primary: #e8e6f0;
+  --text-secondary: #8888a0;
+  --text-bubble-own: #ffffff;
+  --text-bubble-other: #e8e6f0;
+
+  --border-light: #2a2a3c;
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --shadow-bubble: 0 1px 4px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
+
+  --slate-50: #1e1e2e;
+  --slate-100: #252535;
+  --slate-200: #2a2a3c;
+  --slate-300: #3a3a50;
+  --slate-400: #5a5a7a;
+  --slate-500: #8888a0;
+}
+
+/* ---------- WhatsApp ---------- */
+[data-theme="whatsapp"] {
+  --primary-50: #e7fce0;
+  --primary-100: #dcf8c6;
+  --primary-300: #5ef0a8;
+  --primary-400: #25d366;
+  --primary-500: #00a884;
+  --primary-600: #008f72;
+
+  --bg-app: #f0f2f5;
+  --bg-chat: #efeae2;
+  --bg-chat-tint: rgba(239, 234, 226, 0.82);
+  --bg-surface: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-bubble-own: #d9fdd3;
+  --bg-bubble-other: #ffffff;
+  --bg-input: #ffffff;
+
+  --text-primary: #111b21;
+  --text-secondary: #667781;
+  --text-bubble-own: #111b21;
+  --text-bubble-other: #111b21;
+
+  --border-light: #e9edef;
+  --border-glass: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- WhatsApp Oscuro ---------- */
+[data-theme="whatsapp-dark"] {
+  --primary-50: #0a2f24;
+  --primary-100: #0b3d2e;
+  --primary-300: #5ef0a8;
+  --primary-400: #25d366;
+  --primary-500: #00a884;
+  --primary-600: #008f72;
+
+  --bg-app: #111b21;
+  --bg-chat: #0b141a;
+  --bg-chat-tint: rgba(11, 20, 26, 0.90);
+  --bg-surface: #202c33;
+  --bg-glass: rgba(32, 44, 51, 0.9);
+  --bg-bubble-own: #005c4b;
+  --bg-bubble-other: #202c33;
+  --bg-input: #2a3942;
+
+  --text-primary: #e9edef;
+  --text-secondary: #8696a0;
+  --text-bubble-own: #e9edef;
+  --text-bubble-other: #e9edef;
+
+  --border-light: #2a3942;
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --shadow-bubble: 0 1px 4px rgba(0, 0, 0, 0.3);
+
+  --slate-50: #1a2830;
+  --slate-100: #202c33;
+  --slate-200: #2a3942;
+  --slate-300: #3b4f5a;
+  --slate-400: #5a7080;
+  --slate-500: #8696a0;
+}
+
+/* ---------- Windows 11 ---------- */
+[data-theme="windows11"] {
+  --primary-50: #eff6fc;
+  --primary-100: #deecf9;
+  --primary-300: #60b3f7;
+  --primary-400: #2899ef;
+  --primary-500: #0078d4;
+  --primary-600: #006cbe;
+
+  --bg-app: #f3f3f3;
+  --bg-chat: #fafafa;
+  --bg-chat-tint: rgba(250, 250, 250, 0.88);
+  --bg-surface: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.8);
+  --bg-bubble-own: #0078d4;
+  --bg-bubble-other: #f0f0f0;
+  --bg-input: #ffffff;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #616161;
+  --text-bubble-own: #ffffff;
+  --text-bubble-other: #1a1a1a;
+
+  --border-light: #e0e0e0;
+  --border-glass: rgba(0, 0, 0, 0.05);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+/* ---------- Medianoche ---------- */
+[data-theme="medianoche"] {
+  --primary-50: #141c3d;
+  --primary-100: #1a2350;
+  --primary-300: #91a7ff;
+  --primary-400: #748ffc;
+  --primary-500: #4c6ef5;
+  --primary-600: #3b5ede;
+
+  --bg-app: #0d0d1a;
+  --bg-chat: #0a0a15;
+  --bg-chat-tint: rgba(10, 10, 21, 0.92);
+  --bg-surface: #141428;
+  --bg-glass: rgba(20, 20, 40, 0.9);
+  --bg-bubble-own: #4c6ef5;
+  --bg-bubble-other: #1a1a35;
+  --bg-input: #141428;
+
+  --text-primary: #d5d6e8;
+  --text-secondary: #6b6d8a;
+  --text-bubble-own: #ffffff;
+  --text-bubble-other: #d5d6e8;
+
+  --border-light: #1e1e38;
+  --border-glass: rgba(255, 255, 255, 0.04);
+  --shadow-bubble: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
+
+  --slate-50: #141428;
+  --slate-100: #1a1a35;
+  --slate-200: #1e1e38;
+  --slate-300: #2a2a50;
+  --slate-400: #4a4a70;
+  --slate-500: #6b6d8a;
+}
+
+/* ---------- Rosa ---------- */
+[data-theme="rosa"] {
+  --primary-50: #fff0f3;
+  --primary-100: #fce4ec;
+  --primary-300: #f48fb1;
+  --primary-400: #f06292;
+  --primary-500: #e91e63;
+  --primary-600: #c2185b;
+
+  --bg-app: #fff5f7;
+  --bg-chat: #fce8ed;
+  --bg-chat-tint: rgba(252, 232, 237, 0.85);
+  --bg-surface: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.8);
+  --bg-bubble-own: #e91e63;
+  --bg-bubble-other: #ffffff;
+  --bg-input: #ffffff;
+
+  --text-primary: #2d1520;
+  --text-secondary: #8c6070;
+  --text-bubble-own: #ffffff;
+  --text-bubble-other: #2d1520;
+
+  --border-light: #f8d6de;
+  --border-glass: rgba(233, 30, 99, 0.08);
+}
+
+/* ---------- Dark theme desktop backgrounds ---------- */
+@media (min-width: 768px) {
+  body[data-theme="oscuro"] {
+    background: linear-gradient(135deg, #0a0a12 0%, #1e1840 50%, #0e0e14 100%);
+  }
+  body[data-theme="whatsapp-dark"] {
+    background: linear-gradient(135deg, #0a0f14 0%, #0a2f24 50%, #0b141a 100%);
+  }
+  body[data-theme="medianoche"] {
+    background: linear-gradient(135deg, #06060f 0%, #141c3d 50%, #0a0a15 100%);
+  }
 }

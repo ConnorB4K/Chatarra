@@ -174,6 +174,27 @@ const Chat = (() => {
     return _currentRoom;
   }
 
+  /**
+   * Fetch the last message from a room (for preview).
+   * @param {string} roomCode
+   * @returns {Object|null}
+   */
+  async function getLastMessage(roomCode) {
+    try {
+      const snapshot = await db()
+        .ref(`rooms/${roomCode}/messages`)
+        .orderByChild('timestamp')
+        .limitToLast(1)
+        .once('value');
+      const messages = snapshot.val();
+      if (!messages) return null;
+      const keys = Object.keys(messages);
+      return messages[keys[0]];
+    } catch {
+      return null;
+    }
+  }
+
   return {
     listen,
     stopListening,
@@ -184,5 +205,6 @@ const Chat = (() => {
     isHiddenForMe,
     getMessage,
     getCurrentRoom,
+    getLastMessage,
   };
 })();

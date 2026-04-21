@@ -1,33 +1,57 @@
 /* ============================================
    CHATARRA — Presets Module
-   Stickers & Audio presets (static assets)
+   Dynamic stickers & audio from manifest.json
    ============================================ */
 
 const Presets = (() => {
-  /**
-   * Sticker definitions.
-   * Images live in ./assets/stickers/
-   * Only the filename is stored in Firebase.
-   */
-  const STICKERS = [
-    { id: 'laugh', name: 'Risa', file: 'laugh.webp' },
-    { id: 'thumbsup', name: 'Aprobado', file: 'thumbsup.webp' },
-    { id: 'heart', name: 'Corazón', file: 'heart.webp' },
-    { id: 'cry', name: 'Llorar', file: 'cry.webp' },
-    { id: 'wow', name: 'Sorpresa', file: 'wow.webp' },
-    { id: 'angry', name: 'Enojo', file: 'angry.webp' },
-  ];
+  let _stickers = [];
+  let _audioPresets = [];
 
   /**
-   * Audio preset definitions.
-   * Audio files live in ./assets/audio/
-   * Only the filename is stored in Firebase.
+   * Load presets from manifest files.
+   * Falls back to empty arrays if manifests don't exist.
    */
-  const AUDIO_PRESETS = [
-    { id: 'risas', name: 'Risas', file: 'risas.mp3' },
-    { id: 'aplausos', name: 'Aplausos', file: 'aplausos.mp3' },
-    { id: 'suspense', name: 'Suspense', file: 'suspense.mp3' },
-  ];
+  async function init() {
+    _stickers = await _loadManifest('./assets/stickers/manifest.json');
+    _audioPresets = await _loadManifest('./assets/audio/manifest.json');
+  }
+
+  /**
+   * Fetch a manifest.json and convert filenames to preset objects.
+   */
+  async function _loadManifest(url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      const files = await response.json();
+      if (!Array.isArray(files)) return [];
+      return files.map((file) => ({
+        id: _fileToId(file),
+        name: _fileToName(file),
+        file: file,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Derive an ID from filename (lowercase, no extension).
+   */
+  function _fileToId(filename) {
+    return filename.replace(/\.[^.]+$/, '').toLowerCase().replace(/\s+/g, '_');
+  }
+
+  /**
+   * Derive a display name from filename.
+   * Removes extension, replaces - and _ with spaces, capitalizes words.
+   */
+  function _fileToName(filename) {
+    const raw = filename.replace(/\.[^.]+$/, '');
+    return raw
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
 
   /**
    * Get sticker asset path.
@@ -43,35 +67,24 @@ const Presets = (() => {
     return `./assets/audio/${filename}`;
   }
 
-  /**
-   * Get all stickers.
-   */
   function getStickers() {
-    return STICKERS;
+    return _stickers;
   }
 
-  /**
-   * Get all audio presets.
-   */
   function getAudioPresets() {
-    return AUDIO_PRESETS;
+    return _audioPresets;
   }
 
-  /**
-   * Find sticker by filename.
-   */
   function findSticker(file) {
-    return STICKERS.find((s) => s.file === file) || null;
+    return _stickers.find((s) => s.file === file) || null;
   }
 
-  /**
-   * Find audio preset by filename.
-   */
   function findAudio(file) {
-    return AUDIO_PRESETS.find((a) => a.file === file) || null;
+    return _audioPresets.find((a) => a.file === file) || null;
   }
 
   return {
+    init,
     getStickers,
     getAudioPresets,
     getStickerPath,

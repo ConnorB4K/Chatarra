@@ -15,6 +15,9 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="./css/styles.css" />
+
+  <!-- Preload chat background -->
+  <link rel="preload" as="image" href="./assets/background/back.jpg" />
 </head>
 
 <body>
@@ -69,12 +72,22 @@
 
         <div id="rejoin-section" class="rejoin-section" style="display: none;">
           <div class="lobby-divider">sala reciente</div>
-          <button id="btn-rejoin-room" class="btn btn-secondary btn-full">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            Volver a <span id="rejoin-room-code"></span>
+          <button id="btn-rejoin-room" class="btn btn-secondary btn-full rejoin-btn">
+            <div class="rejoin-btn-content">
+              <div class="rejoin-btn-top">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Volver a <span id="rejoin-room-code"></span>
+              </div>
+              <div id="rejoin-preview" class="rejoin-preview"></div>
+            </div>
           </button>
         </div>
       </div>
+
+      <!-- Theme button in lobby -->
+      <button id="btn-lobby-theme" class="lobby-theme-btn" aria-label="Cambiar tema">
+        <i class="fa-solid fa-palette"></i>
+      </button>
     </div>
 
     <!-- ═══════ CHAT VIEW ═══════ -->
@@ -108,6 +121,9 @@
         </button>
         <button id="btn-change-nick">
           <i class="fa-solid fa-user-pen"></i> Cambiar apodo
+        </button>
+        <button id="btn-change-theme">
+          <i class="fa-solid fa-palette"></i> Cambiar tema
         </button>
         <button id="btn-clear-chat" class="danger">
           <i class="fa-solid fa-broom"></i> Vaciar chat para mí
@@ -175,7 +191,11 @@
             spellcheck="true"
             aria-label="Mensaje"
           ></textarea>
+          <button id="btn-clip" class="clip-btn" aria-label="Adjuntar imagen">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
         </div>
+        <input type="file" id="imgbb-file-input" accept="image/*" hidden />
         <button id="btn-send" class="chat-send-btn" aria-label="Enviar mensaje">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
@@ -192,6 +212,16 @@
         <div class="modal-card-actions">
           <button id="btn-edit-cancel" class="btn btn-secondary">Cancelar</button>
           <button id="btn-edit-save" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ THEME SELECTOR MODAL ═══════ -->
+    <div id="theme-modal" class="modal-backdrop">
+      <div class="modal-card theme-modal-card">
+        <h3><i class="fa-solid fa-palette"></i> Elige un tema</h3>
+        <div id="theme-grid" class="theme-grid">
+          <!-- Rendered by JS -->
         </div>
       </div>
     </div>
