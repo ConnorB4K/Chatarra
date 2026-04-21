@@ -890,13 +890,11 @@ const UI = (() => {
 
   function playNotificationSound() {
     if (isMuted) return;
-    if (!notificationAudio) return;
-    if (!audioUnlocked) return; // ← AGREGAR esta guarda
+    if (!audioUnlocked) return;
 
-    notificationAudio.currentTime = 0;
-    notificationAudio.play().catch(() => {
-      // Autoplay bloqueado — ignorar silenciosamente
-    });
+    const sfx = new Audio('./assets/sounds/notification.wav');
+    sfx.volume = 0.5;
+    sfx.play().catch(() => {});
   }
 
   function _playAudioPreset(filename) {
