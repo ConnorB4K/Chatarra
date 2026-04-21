@@ -31,6 +31,21 @@
       </div>
 
       <div class="lobby-actions">
+        <div class="lobby-nickname-group">
+          <label for="nickname-input" class="lobby-label">
+            <i class="fa-solid fa-user"></i> Tu apodo
+          </label>
+          <input
+            type="text"
+            id="nickname-input"
+            maxlength="20"
+            placeholder="Escribe tu apodo..."
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Apodo de usuario"
+          />
+        </div>
+
         <button id="btn-create-room" class="btn btn-primary btn-full">
           <i class="fa-solid fa-plus"></i> Crear Sala
         </button>
@@ -49,6 +64,14 @@
           />
           <button id="btn-join-room" class="btn btn-primary btn-icon" aria-label="Unirse a sala">
             <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          </button>
+        </div>
+
+        <div id="rejoin-section" class="rejoin-section" style="display: none;">
+          <div class="lobby-divider">sala reciente</div>
+          <button id="btn-rejoin-room" class="btn btn-secondary btn-full">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            Volver a <span id="rejoin-room-code"></span>
           </button>
         </div>
       </div>
@@ -136,9 +159,6 @@
       <!-- Input Bar -->
       <div class="chat-input-bar">
         <div class="chat-input-attachments">
-          <button id="btn-attach-image" aria-label="Adjuntar imagen">
-            <i class="fa-solid fa-image"></i>
-          </button>
           <button id="btn-stickers" aria-label="Stickers">
             <i class="fa-solid fa-face-laugh-beam"></i>
           </button>
@@ -161,8 +181,7 @@
         </button>
       </div>
 
-      <!-- Hidden file input for images -->
-      <input type="file" id="image-file-input" accept="image/*" hidden />
+
     </div>
 
     <!-- ═══════ EDIT MESSAGE MODAL ═══════ -->

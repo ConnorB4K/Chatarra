@@ -32,32 +32,18 @@ const Auth = (() => {
   }
 
   /**
-   * Get or prompt for a nickname.
-   * Nickname is stored in localStorage.
+   * Load nickname from localStorage (no prompt).
    */
   function _loadNickname() {
-    let nick = localStorage.getItem(STORAGE_KEY_NICK);
-    if (!nick || nick.trim() === '') {
-      nick = _promptNickname();
-    }
-    return nick;
+    const nick = localStorage.getItem(STORAGE_KEY_NICK);
+    return (nick && nick.trim() !== '') ? nick : null;
   }
 
   /**
-   * Show native prompt for nickname.
+   * Check if user has a valid nickname set.
    */
-  function _promptNickname() {
-    let nick = null;
-    while (!nick || nick.trim() === '' || nick.trim().length < 2) {
-      nick = prompt('Elige tu apodo para Chatarra (mín. 2 caracteres):');
-      if (nick === null) {
-        // User cancelled, assign a default
-        nick = 'Anon' + Math.floor(Math.random() * 9999);
-      }
-    }
-    nick = nick.trim().substring(0, 20);
-    localStorage.setItem(STORAGE_KEY_NICK, nick);
-    return nick;
+  function hasNickname() {
+    return _nickname !== null && _nickname.trim().length >= 2;
   }
 
   /**
@@ -112,6 +98,7 @@ const Auth = (() => {
     getUid,
     getNickname,
     setNickname,
+    hasNickname,
     saveLastRoom,
     getLastRoom,
     clearLastRoom,

@@ -29,11 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Initialize UI
     UI.init();
 
-    // 3. Try to rejoin last room
-    const rejoined = await UI.tryRejoinLastRoom();
-    if (rejoined) {
-      console.log('Rejoined last room');
-    }
+    // 3. Show last room shortcut if available
+    UI.tryRejoinLastRoom();
   } catch (error) {
     console.error('App initialization failed:', error);
     UI.showToast('Error al iniciar la aplicación');

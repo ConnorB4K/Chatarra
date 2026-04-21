@@ -31,6 +31,7 @@ const UI = (() => {
   let _notificationAudio = null;
   let _activeContextMenu = null;
   let _renderedMessageIds = new Set();
+  let _lastRenderedMsg = null;
 
   /**
    * Initialize UI references and event listeners.
@@ -73,7 +74,26 @@ const UI = (() => {
   // ─── Lobby ──────────────────────────────
 
   function _setupLobbyEvents() {
+    // Nickname validation helper
+    function _validateNickname() {
+      const input = document.getElementById('nickname-input');
+      const nick = input.value.trim();
+      if (nick.length < 2) {
+        input.classList.add('error');
+        showToast('El apodo debe tener al menos 2 caracteres');
+        input.focus();
+        // Remove error class after animation
+        setTimeout(() => input.classList.remove('error'), 500);
+        return false;
+      }
+      input.classList.remove('error');
+      Auth.setNickname(nick);
+      return true;
+    }
+
     document.getElementById('btn-create-room').addEventListener('click', async () => {
+      if (!_validateNickname()) return;
+
       const btn = document.getElementById('btn-create-room');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>';
@@ -92,6 +112,8 @@ const UI = (() => {
     });
 
     document.getElementById('btn-join-room').addEventListener('click', async () => {
+      if (!_validateNickname()) return;
+
       const code = $roomCodeInput.value.trim().toUpperCase();
       if (!Rooms.isValidCode(code)) {
         showToast('Código inválido. Debe tener 6 caracteres.');
@@ -120,6 +142,34 @@ const UI = (() => {
       }
     });
 
+    // Rejoin room shortcut
+    document.getElementById('btn-rejoin-room').addEventListener('click', async () => {
+      if (!_validateNickname()) return;
+
+      const code = document.getElementById('rejoin-room-code').textContent;
+      if (!code) return;
+
+      const btn = document.getElementById('btn-rejoin-room');
+      btn.disabled = true;
+
+      try {
+        const exists = await Rooms.joinRoom(code);
+        if (exists) {
+          Auth.saveLastRoom(code);
+          await _enterRoom(code);
+        } else {
+          showToast('Sala ya no existe');
+          Auth.clearLastRoom();
+          document.getElementById('rejoin-section').style.display = 'none';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error al unirse');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
     // Allow Enter key on room code input
     $roomCodeInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -140,6 +190,7 @@ const UI = (() => {
     $chatView.classList.add('active');
     $chatMessages.innerHTML = '';
     _renderedMessageIds.clear();
+    _lastRenderedMsg = null;
 
     $chatHeaderTitle.textContent = 'Sala';
     $chatHeaderCode.textContent = roomCode;
@@ -164,16 +215,22 @@ const UI = (() => {
   }
 
   function leaveRoom() {
+    const lastRoom = Chat.getCurrentRoom();
     Chat.stopListening();
     Swipe.destroy($chatMessages);
     _closeAllPanels();
     _renderedMessageIds.clear();
+    _lastRenderedMsg = null;
 
     $chatView.classList.remove('active');
     $lobbyView.classList.remove('hidden');
     $chatMessages.innerHTML = '';
     $chatInput.value = '';
     _clearReply();
+
+    if (lastRoom) {
+      _showRejoinShortcut(lastRoom);
+    }
   }
 
   // ─── Message Rendering ──────────────────
@@ -184,10 +241,26 @@ const UI = (() => {
     // Skip hidden messages
     if (Chat.isHiddenForMe(msg)) return;
 
+    // Date separator
+    const msgDate = new Date(msg.timestamp);
+    if (_lastRenderedMsg) {
+      const lastDate = new Date(_lastRenderedMsg.timestamp);
+      if (!_isSameDay(msgDate, lastDate)) {
+        _insertDateSeparator(msgDate);
+      }
+    } else {
+      _insertDateSeparator(msgDate);
+    }
+
+    // Is this the first message in a consecutive group from this sender?
+    const isFirstInGroup = !_lastRenderedMsg || _lastRenderedMsg.uid !== msg.uid;
+
     _renderedMessageIds.add(id);
-    const el = _createMessageElement(id, msg);
+    const el = _createMessageElement(id, msg, isFirstInGroup);
     $chatMessages.appendChild(el);
     _scrollToBottom();
+
+    _lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
 
     // Play sound if it's from someone else
     if (msg.uid !== Auth.getUid()) {
@@ -214,10 +287,10 @@ const UI = (() => {
     }
   }
 
-  function _createMessageElement(id, msg) {
+  function _createMessageElement(id, msg, isFirstInGroup = true) {
     const isOwn = msg.uid === Auth.getUid();
     const wrapper = document.createElement('div');
-    wrapper.className = `message-wrapper ${isOwn ? 'own' : 'other'}`;
+    wrapper.className = `message-wrapper ${isOwn ? 'own' : 'other'}${isFirstInGroup ? ' has-tail' : ''}`;
     wrapper.dataset.messageId = id;
 
     // Swipe reply icon
@@ -226,8 +299,8 @@ const UI = (() => {
     swipeIcon.innerHTML = '<i class="fa-solid fa-reply"></i>';
     wrapper.appendChild(swipeIcon);
 
-    // Sender name (only for others)
-    if (!isOwn) {
+    // Sender name (only for others, first in group)
+    if (!isOwn && isFirstInGroup) {
       const sender = document.createElement('div');
       sender.className = 'message-sender';
       sender.textContent = msg.nickname || 'Anónimo';
@@ -402,34 +475,6 @@ const UI = (() => {
     // Back button
     document.getElementById('btn-back').addEventListener('click', leaveRoom);
 
-    // Image upload
-    document.getElementById('btn-attach-image').addEventListener('click', () => {
-      document.getElementById('image-file-input').click();
-    });
-
-    document.getElementById('image-file-input').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (!file.type.startsWith('image/')) {
-        showToast('Solo se permiten imágenes');
-        return;
-      }
-
-      showToast('Subiendo imagen...');
-      try {
-        const url = await Media.uploadImage(Chat.getCurrentRoom(), file);
-        await Chat.sendMessage(Chat.getCurrentRoom(), {
-          type: 'image',
-          content: url,
-          replyTo: _replyToId,
-        });
-        _clearReply();
-      } catch (err) {
-        console.error(err);
-        showToast('Error al subir la imagen');
-      }
-      e.target.value = '';
-    });
 
     // Sticker button
     document.getElementById('btn-stickers').addEventListener('click', () => {
@@ -797,20 +842,59 @@ const UI = (() => {
     }
   }
 
-  // ─── Auto-rejoin last room ────────────
+  // ─── Rejoin Shortcut ─────────────────
 
-  async function tryRejoinLastRoom() {
+  function _showRejoinShortcut(roomCode) {
+    const section = document.getElementById('rejoin-section');
+    const codeSpan = document.getElementById('rejoin-room-code');
+    if (roomCode) {
+      codeSpan.textContent = roomCode;
+      section.style.display = 'block';
+    } else {
+      section.style.display = 'none';
+    }
+  }
+
+  function tryRejoinLastRoom() {
     const lastRoom = Auth.getLastRoom();
     if (lastRoom && Rooms.isValidCode(lastRoom)) {
-      const exists = await Rooms.joinRoom(lastRoom);
-      if (exists) {
-        await _enterRoom(lastRoom);
-        return true;
-      } else {
-        Auth.clearLastRoom();
-      }
+      _showRejoinShortcut(lastRoom);
     }
-    return false;
+    // Pre-fill nickname if saved
+    const savedNick = Auth.getNickname();
+    if (savedNick) {
+      document.getElementById('nickname-input').value = savedNick;
+    }
+  }
+
+  // ─── Date Helpers ──────────────────────
+
+  function _insertDateSeparator(date) {
+    const el = document.createElement('div');
+    el.className = 'date-separator';
+    el.textContent = _formatDate(date);
+    $chatMessages.appendChild(el);
+  }
+
+  function _formatDate(date) {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (_isSameDay(date, today)) return 'Hoy';
+    if (_isSameDay(date, yesterday)) return 'Ayer';
+
+    const options = { day: 'numeric', month: 'long' };
+    if (date.getFullYear() !== today.getFullYear()) {
+      options.year = 'numeric';
+    }
+    return date.toLocaleDateString('es-ES', options);
+  }
+
+  function _isSameDay(d1, d2) {
+    return d1.getDate() === d2.getDate() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getFullYear() === d2.getFullYear();
   }
 
   return {
