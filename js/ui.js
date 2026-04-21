@@ -36,6 +36,7 @@ const UI = (() => {
   let $themeModal = null;
   let _isMuted = localStorage.getItem('chatarra_muted') === 'true';
   let _audioUnlocked = false;
+  let _audioCache = {};
 
   // ─── Theme Definitions ─────────────────
   const THEMES = [
@@ -700,6 +701,9 @@ const UI = (() => {
     // Render audio presets
     const audioList = document.getElementById('audio-list');
     Presets.getAudioPresets().forEach((audio) => {
+      const preloaded = new Audio(Presets.getAudioPath(audio.file));
+      preloaded.preload = 'auto';
+      _audioCache[audio.file] = preloaded;
       const item = document.createElement('div');
       item.className = 'audio-item';
       item.innerHTML = `
@@ -951,7 +955,8 @@ const UI = (() => {
       if (wasMe) return;
     }
 
-    const audio = new Audio(Presets.getAudioPath(filename));
+    const audio = _audioCache[filename] || new Audio(Presets.getAudioPath(filename));
+    audio.currentTime = 0;
     audio._filename = filename;
     audio.volume = 0.8;
     _activeAudio = audio;
