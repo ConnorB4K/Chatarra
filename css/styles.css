@@ -473,7 +473,7 @@ a {
     bottom: var(--input-bar-height);
     left: 0;
     right: 0;
-    background-image: url('../assets/background/back.jpg');
+    background-image: url('../assets/background/background.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
