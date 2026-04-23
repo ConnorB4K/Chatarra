@@ -22,6 +22,8 @@
     window.OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.init({
         appId: "550e3043-5071-4316-b389-896b997bf773",
+        serviceWorkerPath: "/Chatarra/OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/Chatarra/" },
       });
     });
   </script>
