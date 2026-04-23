@@ -240,7 +240,7 @@ const UI = (() => {
     _scrollToBottom();
   }
 
-  function leaveRoom() {
+  async function leaveRoom() {
     await Notifications.clearRoomTag();
     const lastRoom = Chat.getCurrentRoom();
     Chat.stopListening();
