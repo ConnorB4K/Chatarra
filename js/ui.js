@@ -1068,7 +1068,7 @@ const UI = (() => {
 
   // ─── Notifications ────────────────────
 
-  async function initNotifications(roomCode) {
+  async function _initNotifications(roomCode) {
       try {
           const uid = Auth.getUid();
           await Notifications.requestPermission();   // pide permiso al usuario

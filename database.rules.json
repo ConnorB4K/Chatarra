@@ -5,6 +5,7 @@
         ".read": "auth != null",
         ".write": "auth != null",
         "messages": {
+          ".indexOn": ["timestamp"]
           "$messageId": {
             ".write": "auth != null",
             ".validate": "newData.hasChildren(['uid', 'type', 'content', 'timestamp'])"
