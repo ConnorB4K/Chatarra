@@ -312,10 +312,7 @@ const UI = (() => {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
-                  // La REST API key va aquí — podés leerla desde una variable
-                  // IMPORTANTE: en producción esto debería ir en un servidor
-                  // Para una app privada/de amigos es aceptable en el cliente
-                  'Authorization': 'os_v2_app_kuhdaq2qofbrnm4jrfvzs67xompf5n43sboedsefyrzewktzgfbrwauobzq24bnf7ue3qqkidilpxsc67z4lzazjbme7fnaut2ufe2a'
+                  'Authorization': 'Key os_v2_app_kuhdaq2qofbrnm4jrfvzs67xompf5n43sboedsefyrzewktzgfbrwauobzq24bnf7ue3qqkidilpxsc67z4lzazjbme7fnaut2ufe2a'
               },
               body: JSON.stringify({
                   app_id: '550e3043-5071-4316-b389-896b997bf773',
