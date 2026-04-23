@@ -241,6 +241,7 @@ const UI = (() => {
   }
 
   function leaveRoom() {
+    await Notifications.clearRoomTag();
     const lastRoom = Chat.getCurrentRoom();
     Chat.stopListening();
     Swipe.destroy($chatMessages);
@@ -292,6 +293,43 @@ const UI = (() => {
     if (msg.uid !== Auth.getUid()) {
       _playNotificationSound();
     }
+    
+    if (msg.uid !== Auth.getUid()) {
+        sendPushToRoom(Chat.getCurrentRoom(), msg);
+    }
+  }
+  
+  async function sendPushToRoom(roomCode, msg) {
+      const sender = msg.nickname || 'Anónimo';
+      const preview = msg.type === 'text'
+          ? msg.content.substring(0, 60)
+          : msg.type === 'sticker' ? '🖼️ Sticker'
+          : msg.type === 'image'  ? '📷 Imagen'
+          : '🔊 Audio';
+
+      try {
+          await fetch('https://onesignal.com/api/v1/notifications', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  // La REST API key va aquí — podés leerla desde una variable
+                  // IMPORTANTE: en producción esto debería ir en un servidor
+                  // Para una app privada/de amigos es aceptable en el cliente
+                  'Authorization': 'os_v2_app_kuhdaq2qofbrnm4jrfvzs67xompf5n43sboedsefyrzewktzgfbrwauobzq24bnf7ue3qqkidilpxsc67z4lzazjbme7fnaut2ufe2a'
+              },
+              body: JSON.stringify({
+                  app_id: '550e3043-5071-4316-b389-896b997bf773',
+                  filters: [
+                      { field: 'tag', key: 'room', relation: '=', value: roomCode }
+                  ],
+                  headings: { es: `Chatarra · ${roomCode}` },
+                  contents: { es: `${sender}: ${preview}` },
+                  url: window.location.href
+              })
+          });
+      } catch (e) {
+          // Silencioso — las notificaciones push son opcionales
+      }
   }
 
   function _onMessageChanged(id, msg) {
@@ -1030,7 +1068,15 @@ const UI = (() => {
 
   // ─── Notifications ────────────────────
 
-  async function _initNotifications(roomCode) {
+  async function initNotifications(roomCode) {
+      try {
+          const uid = Auth.getUid();
+          await Notifications.requestPermission();   // pide permiso al usuario
+          await Notifications.setUserId(uid);        // vincula el UID de Firebase
+          await Notifications.setRoomTag(roomCode);  // etiqueta la sala activa
+      } catch (e) {
+          console.warn('Notificaciones no disponibles:', e);
+      }
   }
 
   // ─── Rejoin Shortcut ─────────────────

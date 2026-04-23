@@ -1,76 +1,48 @@
-/* ============================================
-   CHATARRA — Notifications Module
-   Firebase Cloud Messaging (FCM)
-   ============================================ */
+// notifications.js — reemplaza el contenido completo
 
 const Notifications = (() => {
-  let _token = null;
-  let _messaging = null;
 
-  /**
-   * Initialize FCM. Request permission and get token.
-   * @param {string} vapidKey - Your VAPID key from Firebase Console
-   * @returns {string|null} FCM token or null if denied
-   */
-  async function init(vapidKey) {
-    try {
-      // Check if messaging is supported
-      if (!firebase.messaging.isSupported()) {
-        console.warn('FCM not supported in this browser');
-        return null;
-      }
-
-      _messaging = firebase.messaging();
-
-      // Register service worker
-      const registration = await navigator.serviceWorker.register(
-        './firebase-messaging-sw.js'
-      );
-
-      // Request permission
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        console.warn('Notification permission denied');
-        return null;
-      }
-
-      // Get token
-      _token = await _messaging.getToken({
-        vapidKey: vapidKey,
-        serviceWorkerRegistration: registration,
-      });
-
-      // Listen for foreground messages
-      _messaging.onMessage((payload) => {
-        _handleForegroundMessage(payload);
-      });
-
-      return _token;
-    } catch (error) {
-      console.error('FCM init error:', error);
-      return null;
+    // Solicitar permiso y suscribir al usuario cuando entra al chat
+    async function requestPermission() {
+        if (!window.OneSignal) return;
+        try {
+            await window.OneSignal.Notifications.requestPermission();
+        } catch (e) {
+            console.warn('OneSignal: no se pudo solicitar permiso', e);
+        }
     }
-  }
 
-  /**
-   * Handle messages received while app is in foreground.
-   */
-  function _handleForegroundMessage(payload) {
-    const { title, body } = payload.notification || {};
-    if (title) {
-      UI.showToast(`${title}: ${body}`);
+    // Asignar un External ID al usuario (usa el UID de Firebase Auth)
+    // Esto permite enviar notificaciones a un usuario específico
+    async function setUserId(uid) {
+        if (!window.OneSignal || !uid) return;
+        try {
+            await window.OneSignal.login(uid);
+        } catch (e) {
+            console.warn('OneSignal: no se pudo asignar user ID', e);
+        }
     }
-  }
 
-  /**
-   * Get the current FCM token.
-   */
-  function getToken() {
-    return _token;
-  }
+    // Etiquetar al usuario con el código de sala actual
+    // Así OneSignal sabe a qué sala pertenece cada usuario
+    async function setRoomTag(roomCode) {
+        if (!window.OneSignal || !roomCode) return;
+        try {
+            await window.OneSignal.User.addTag('room', roomCode);
+        } catch (e) {
+            console.warn('OneSignal: no se pudo asignar tag de sala', e);
+        }
+    }
 
-  return {
-    init,
-    getToken,
-  };
+    // Limpiar la sala al salir del chat
+    async function clearRoomTag() {
+        if (!window.OneSignal) return;
+        try {
+            await window.OneSignal.User.removeTag('room');
+        } catch (e) {
+            console.warn('OneSignal: no se pudo limpiar tag', e);
+        }
+    }
+
+    return { requestPermission, setUserId, setRoomTag, clearRoomTag };
 })();
