@@ -78,32 +78,37 @@ const Media = (() => {
    * Compress and upload an image to ImgBB.
    * Returns the public URL.
    */
+  const EXPIRATION_SECONDS = 864000;
+
   async function uploadImage(file) {
-    if (!_apiKey) {
-      throw new Error('ImgBB API key not configured');
+    if (!apiKey) throw new Error('ImgBB API key not configured');
+
+    let base64;
+
+    if (file.type === 'image/gif') {
+      // Los GIFs NO se comprimen: el canvas destruye la animación
+      base64 = await blobToBase64(file);
+    } else {
+      // Imágenes estáticas: comprimir normalmente
+      const compressed = await compressImage(file);
+      base64 = await blobToBase64(compressed);
     }
 
-    // Compress
-    const compressed = await _compressImage(file);
-
-    // Convert to base64
-    const base64 = await _blobToBase64(compressed);
-
-    // Upload to ImgBB
     const formData = new FormData();
-    formData.append('key', _apiKey);
+    formData.append('key', apiKey);
     formData.append('image', base64);
+    formData.append('expiration', EXPIRATION_SECONDS);
 
     const response = await fetch('https://api.imgbb.com/1/upload', {
       method: 'POST',
       body: formData,
     });
-    const data = await response.json();
 
+    const data = await response.json();
     if (data.success) {
       return data.data.display_url;
     } else {
-      throw new Error(data.error?.message || 'Upload failed');
+      throw new Error(data.error?.message ?? 'Upload failed');
     }
   }
 

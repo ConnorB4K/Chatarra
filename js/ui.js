@@ -638,8 +638,12 @@ const UI = (() => {
     fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (!file.type.startsWith('image/')) {
-        showToast('Solo se permiten imágenes');
+
+      // Validar por tipo MIME Y por extensión como fallback
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const validExt = /\.(jpe?g|png|gif|webp)$/i.test(file.name);
+      if (!validTypes.includes(file.type) && !validExt) {
+        showToast('Solo se permiten imágenes y GIFs');
         return;
       }
 
