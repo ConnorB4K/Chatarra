@@ -231,12 +231,13 @@ const UI = (() => {
 
       onMessageChanged: function(id, msg) {
         if (Chat.isHiddenForMe(msg)) {
-          const el = chatMessages.querySelector(`[data-message-id="${id}"]`);
+          const el = $chatMessages.querySelector(`[data-message-id="${id}"]`);
           if (el) el.remove();
-          renderedMessageIds.delete(id);
+          _renderedMessageIds.delete(id);
           return;
         }
-        const existingEl = chatMessages.querySelector(`[data-message-id="${id}"]`);
+
+        const existingEl = $chatMessages.querySelector(`[data-message-id="${id}"]`);
         if (existingEl) {
           const newEl = createMessageElement(id, msg);
           existingEl.replaceWith(newEl);
@@ -285,24 +286,33 @@ const UI = (() => {
   // ─── Message Rendering ──────────────────
 
   function onNewMessage(id, msg, isNew) {
-    if (renderedMessageIds.has(id)) return;
+    // Cambio: renderedMessageIds -> _renderedMessageIds
+    if (_renderedMessageIds.has(id)) return;
     if (Chat.isHiddenForMe(msg)) return;
 
     // Date separator
     const msgDate = new Date(msg.timestamp);
-    if (lastRenderedMsg) {
-      const lastDate = new Date(lastRenderedMsg.timestamp);
+    // Cambio: lastRenderedMsg -> _lastRenderedMsg
+    if (_lastRenderedMsg) {
+      const lastDate = new Date(_lastRenderedMsg.timestamp);
       if (!isSameDay(msgDate, lastDate)) insertDateSeparator(msgDate);
     } else {
       insertDateSeparator(msgDate);
     }
 
-    const isFirstInGroup = !lastRenderedMsg || lastRenderedMsg.uid !== msg.uid;
-    renderedMessageIds.add(id);
+    // Cambio: lastRenderedMsg -> _lastRenderedMsg
+    const isFirstInGroup = !_lastRenderedMsg || _lastRenderedMsg.uid !== msg.uid;
+    
+    // Cambio: renderedMessageIds -> _renderedMessageIds
+    _renderedMessageIds.add(id);
     const el = createMessageElement(id, msg, isFirstInGroup);
-    chatMessages.appendChild(el);
+    
+    // Cambio: chatMessages -> $chatMessages
+    $chatMessages.appendChild(el);
     scrollToBottom();
-    lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
+    
+    // Cambio: lastRenderedMsg -> _lastRenderedMsg
+    _lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
 
     // Solo para mensajes nuevos (no historial)
     if (isNew) {

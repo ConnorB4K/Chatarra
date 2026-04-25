@@ -19,23 +19,23 @@ const Chat = (() => {
    */
   function listen(roomCode, callbacks) {
     stopListening();
-    currentRoom = roomCode;
-    messagesRef = db.ref(`rooms/${roomCode}/messages`);
-    messages = {};
+    _currentRoom = roomCode;
+    _messagesRef = db.ref(`rooms/${roomCode}/messages`);
+    _messages = {};
 
     let initialLoadDone = false;
 
-    const addedRef = messagesRef.orderByChild('timestamp');
+    const addedRef = _messagesRef.orderByChild('timestamp');
 
     addedRef.on('child_added', snapshot => {
       const msg = snapshot.val();
       const id = snapshot.key;
-      messages[id] = msg;
+      _messages[id] = msg;
       if (callbacks.onMessage) {
         callbacks.onMessage(id, msg, initialLoadDone);
       }
     });
-    listeners.push({ ref: addedRef, event: 'child_added' });
+    _listeners.push({ ref: addedRef, event: 'child_added' });
 
     addedRef.once('value', () => {
       initialLoadDone = true;
@@ -45,10 +45,10 @@ const Chat = (() => {
     addedRef.on('child_changed', snapshot => {
       const msg = snapshot.val();
       const id = snapshot.key;
-      messages[id] = msg;
+      _messages[id] = msg;
       if (callbacks.onMessageChanged) callbacks.onMessageChanged(id, msg);
     });
-    listeners.push({ ref: addedRef, event: 'child_changed' });
+    _listeners.push({ ref: addedRef, event: 'child_changed' });
   }
 
   /**
