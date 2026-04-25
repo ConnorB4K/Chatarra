@@ -130,7 +130,7 @@ const UI = (() => {
       try {
         const code = await Rooms.createRoom();
         Auth.saveLastRoom(code);
-        await _enterRoom(code);
+        await enterRoom(code);
       } catch (err) {
         console.error(err);
         showToast('Error al crear la sala');
@@ -158,7 +158,7 @@ const UI = (() => {
         const exists = await Rooms.joinRoom(code);
         if (exists) {
           Auth.saveLastRoom(code);
-          await _enterRoom(code);
+          await enterRoom(code);
         } else {
           showToast('Sala no encontrada');
         }
@@ -185,7 +185,7 @@ const UI = (() => {
         const exists = await Rooms.joinRoom(code);
         if (exists) {
           Auth.saveLastRoom(code);
-          await _enterRoom(code);
+          await enterRoom(code);
         } else {
           showToast('Sala ya no existe');
           Auth.clearLastRoom();
@@ -214,7 +214,7 @@ const UI = (() => {
 
   // ─── Enter/Leave Room ──────────────────
 
-  async function _enterRoom(roomCode) {
+  async function enterRoom(roomCode) {
     $lobbyView.classList.add('hidden');
     $chatView.classList.add('active');
     $chatMessages.innerHTML = '';
@@ -1304,6 +1304,6 @@ const UI = (() => {
     getReplyToId,
     applyTheme,
     loadSavedTheme,
-    _enterRoom,
+    enterRoom,
   };
 })();
