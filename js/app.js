@@ -28,16 +28,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 7. Auto-rejoin last room if nickname and room are saved
     const lastRoom = Auth.getLastRoom();
     if (lastRoom && Auth.hasNickname() && Rooms.isValidCode(lastRoom)) {
-      try {
-        const exists = await Rooms.joinRoom(lastRoom);
-        if (exists) {
-          await UI._enterRoom(lastRoom); // ← ver nota abajo
-        } else {
-          Auth.clearLastRoom();
+        try {
+            const exists = await Rooms.joinRoom(lastRoom);
+            if (exists) {
+                await UI.enterRoom(lastRoom);
+            } else {
+                Auth.clearLastRoom();
+            }
+        } catch (err) {
+            console.error("Auto-rejoin failed", err);
         }
-      } catch (err) {
-        console.error('Auto-rejoin failed:', err);
-      }
     }
   } catch (error) {
     console.error('App initialization failed:', error);

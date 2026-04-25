@@ -295,7 +295,7 @@ const UI = (() => {
 
   async function leaveRoom() {
     await Notifications.clearRoomTag();
-    const lastRoom = Chat.getCurrentRoom();
+    const lastRoom = Auth.getLastRoom();
     Chat.stopListening();
     Swipe.destroy($chatMessages);
     _closeAllPanels();
