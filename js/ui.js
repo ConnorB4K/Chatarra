@@ -272,9 +272,9 @@ const UI = (() => {
 
   function onNewMessage(id, msg, isNew) {
     if (renderedMessageIds.has(id)) return;
-
     if (Chat.isHiddenForMe(msg)) return;
 
+    // Date separator
     const msgDate = new Date(msg.timestamp);
     if (lastRenderedMsg) {
       const lastDate = new Date(lastRenderedMsg.timestamp);
@@ -290,11 +290,22 @@ const UI = (() => {
     scrollToBottom();
     lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
 
-    if (isNew && msg.uid !== Auth.getUid()) {
-      playNotificationSound();
-    }
-    if (isNew && msg.uid !== Auth.getUid()) {
-      sendPushToRoom(Chat.getCurrentRoom(), msg);
+    // Solo para mensajes nuevos (no historial)
+    if (isNew) {
+      // Sonido de notificación (solo si es de otro usuario)
+      if (msg.uid !== Auth.getUid()) {
+        _playNotificationSound();
+      }
+
+      // Auto-reproducir audio preset para TODOS los presentes
+      if (msg.type === 'audio') {
+        playAudioPreset(msg.content);
+      }
+
+      // Push notification
+      if (msg.uid !== Auth.getUid()) {
+        sendPushToRoom(Chat.getCurrentRoom(), msg);
+      }
     }
   }
   
