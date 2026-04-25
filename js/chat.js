@@ -7,60 +7,107 @@ const Chat = (() => {
   let _currentRoom = null;
   let _messagesRef = null;
   let _listeners = [];
-  let _messages = {}; // { msgId: msgData }
-  const EDIT_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
+  let _messages = {}; 
+  const EDIT_WINDOW_MS = 30 * 60 * 1000;
+  
+  // Variables para paginación
+  let _earliestMessageTimestamp = null;
+  let _hasMoreMessages = true;
+  const MESSAGES_PER_PAGE = 30;
 
   const db = () => firebase.database();
 
-  /**
-   * Join a room and start listening for messages.
-   * @param {string} roomCode
-   * @param {Object} callbacks - { onMessage, onMessageChanged, onMessageRemoved }
-   */
   function listen(roomCode, callbacks) {
     stopListening();
     _currentRoom = roomCode;
     _messagesRef = db().ref(`rooms/${roomCode}/messages`);
     _messages = {};
+    _earliestMessageTimestamp = null;
+    _hasMoreMessages = true;
 
     let initialLoadDone = false;
 
-    const addedRef = _messagesRef.orderByChild('timestamp');
+    // Solo pedimos los últimos 30 mensajes inicialmente
+    const addedRef = _messagesRef.orderByChild('timestamp').limitToLast(MESSAGES_PER_PAGE);
 
     addedRef.on('child_added', snapshot => {
       const msg = snapshot.val();
       const id = snapshot.key;
       _messages[id] = msg;
+      
+      // Guardar el timestamp más antiguo para usarlo luego en "Cargar más"
+      if (!_earliestMessageTimestamp || msg.timestamp < _earliestMessageTimestamp) {
+        _earliestMessageTimestamp = msg.timestamp;
+      }
+
       if (callbacks.onMessage) {
         callbacks.onMessage(id, msg, initialLoadDone);
       }
     });
     _listeners.push({ ref: addedRef, event: 'child_added' });
 
-    addedRef.once('value', () => {
+    addedRef.once('value', (snapshot) => {
       initialLoadDone = true;
+      // Si recibimos menos del límite, no hay más mensajes antiguos
+      if (snapshot.numChildren() < MESSAGES_PER_PAGE) {
+        _hasMoreMessages = false;
+      }
       if (callbacks.onReady) callbacks.onReady();
     });
 
-    addedRef.on('child_changed', snapshot => {
+    // Escuchar cambios (editados/eliminados) globalmente para la sala
+    const changedRef = _messagesRef.orderByChild('timestamp');
+    changedRef.on('child_changed', snapshot => {
       const msg = snapshot.val();
       const id = snapshot.key;
       _messages[id] = msg;
       if (callbacks.onMessageChanged) callbacks.onMessageChanged(id, msg);
     });
-    _listeners.push({ ref: addedRef, event: 'child_changed' });
+    _listeners.push({ ref: changedRef, event: 'child_changed' });
   }
 
-  /**
-   * Stop listening to messages.
-   */
-  function stopListening() {
-    if (_messagesRef) {
-      _messagesRef.off();
+  // Nueva función para paginación (Cargar más)
+  async function loadMoreMessages(callbacks) {
+    if (!_currentRoom || !_hasMoreMessages || !_earliestMessageTimestamp) return false;
+
+    const snapshot = await db().ref(`rooms/${_currentRoom}/messages`)
+      .orderByChild('timestamp')
+      .endAt(_earliestMessageTimestamp - 1) // Obtener los anteriores al más antiguo actual
+      .limitToLast(MESSAGES_PER_PAGE)
+      .once('value');
+
+    const olderMessages = snapshot.val();
+    if (!olderMessages) {
+      _hasMoreMessages = false;
+      return false;
     }
+
+    const keys = Object.keys(olderMessages).sort((a, b) => olderMessages[a].timestamp - olderMessages[b].timestamp);
+    
+    if (keys.length < MESSAGES_PER_PAGE) {
+      _hasMoreMessages = false;
+    }
+
+    // Actualizamos el timestamp más antiguo
+    _earliestMessageTimestamp = olderMessages[keys[0]].timestamp;
+
+    // Ejecutar el callback por cada mensaje viejo recuperado
+    keys.forEach(id => {
+      const msg = olderMessages[id];
+      _messages[id] = msg;
+      if (callbacks.onOldMessage) callbacks.onOldMessage(id, msg);
+    });
+
+    return _hasMoreMessages;
+  }
+
+  function stopListening() {
+    _listeners.forEach(l => l.ref.off(l.event));
     _listeners = [];
     _messages = {};
     _currentRoom = null;
+    _earliestMessageTimestamp = null;
+    _hasMoreMessages = true;
   }
 
   /**
@@ -206,5 +253,6 @@ const Chat = (() => {
     getMessage,
     getCurrentRoom,
     getLastMessage,
+    loadMoreMessages
   };
 })();

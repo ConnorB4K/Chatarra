@@ -224,6 +224,41 @@ const UI = (() => {
     $chatHeaderTitle.textContent = 'Sala';
     $chatHeaderCode.textContent = roomCode;
 
+    // Crear el contenedor para el botón de "Cargar más"
+    const loadMoreContainer = document.createElement('div');
+    loadMoreContainer.id = 'load-more-container';
+    loadMoreContainer.style.textAlign = 'center';
+    loadMoreContainer.style.padding = '10px';
+    
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.className = 'btn btn-secondary';
+    loadMoreBtn.textContent = 'Cargar mensajes anteriores';
+    loadMoreBtn.style.fontSize = '0.8rem';
+    loadMoreBtn.style.padding = '8px 16px';
+    loadMoreBtn.onclick = async () => {
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.textContent = 'Cargando...';
+      const scrollHeightBefore = $chatMessages.scrollHeight;
+      
+      const hasMore = await Chat.loadMoreMessages({
+        onOldMessage: onOldMessage // Llama a nuestra nueva función
+      });
+      
+      if (!hasMore) {
+        loadMoreContainer.style.display = 'none';
+      } else {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Cargar mensajes anteriores';
+      }
+      
+      // Mantener la posición de scroll para no saltar de golpe
+      const scrollHeightAfter = $chatMessages.scrollHeight;
+      $chatMessages.scrollTop += (scrollHeightAfter - scrollHeightBefore);
+    };
+
+    loadMoreContainer.appendChild(loadMoreBtn);
+    $chatMessages.appendChild(loadMoreContainer);
+
     // Start listening
     chatReady = false;
     Chat.listen(roomCode, {
@@ -238,8 +273,7 @@ const UI = (() => {
         }
         const existingEl = $chatMessages.querySelector(`[data-message-id="${id}"]`);
         if (existingEl) {
-          // Asegúrate de usar el guion bajo aquí
-          const newEl = _createMessageElement(id, msg); 
+          const newEl = _createMessageElement(id, msg);
           existingEl.replaceWith(newEl);
         }
       },
@@ -249,15 +283,14 @@ const UI = (() => {
         _scrollToBottom();
       }
     });
-    
-    // Init swipe
-    Swipe.init($chatMessages, _onSwipeReply);
 
-    // Auto-resize input
-    $chatInput.focus();
+    $chatInput.value = '';
+    _clearReply();
 
-    // Scroll to bottom
-    _scrollToBottom();
+    const lastRoom = Chat.getLastRoom();
+    if (lastRoom) {
+      _showRejoinShortcut(lastRoom);
+    }
   }
 
   async function leaveRoom() {
@@ -318,6 +351,26 @@ const UI = (() => {
       }
     }
   }
+  
+  function onOldMessage(id, msg) {
+    if (_renderedMessageIds.has(id)) return;
+    if (Chat.isHiddenForMe(msg)) return;
+    
+    _renderedMessageIds.add(id);
+    
+    // Aquí siempre enviamos isFirstInGroup como true o manipulamos el css a posteriori, 
+    // porque insertar hacia atrás altera el orden del DOM.
+    const el = _createMessageElement(id, msg, true);
+    
+    // Obtenemos el contenedor del botón "Cargar más"
+    const loadMoreContainer = document.getElementById('load-more-container');
+    
+    // Insertamos el mensaje justo debajo del botón "Cargar más"
+    if (loadMoreContainer && loadMoreContainer.nextSibling) {
+       $chatMessages.insertBefore(el, loadMoreContainer.nextSibling);
+    } else {
+       $chatMessages.appendChild(el);
+    }
   
   async function sendPushToRoom(roomCode, msg) {
       const sender = msg.nickname || 'Anónimo';
