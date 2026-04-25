@@ -290,7 +290,7 @@ const UI = (() => {
     const msgDate = new Date(msg.timestamp);
     if (_lastRenderedMsg) {
       const lastDate = new Date(_lastRenderedMsg.timestamp);
-      if (!isSameDay(msgDate, lastDate)) _insertDateSeparator(msgDate);
+      if (!_isSameDay(msgDate, lastDate)) _insertDateSeparator(msgDate);
     } else {
       _insertDateSeparator(msgDate);
     }
