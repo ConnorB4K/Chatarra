@@ -10,7 +10,7 @@ const Chat = (() => {
   let _messages = {}; // { msgId: msgData }
   const EDIT_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
 
-  const db = () => firebase.database();
+  const db = firebase.database();
 
   /**
    * Join a room and start listening for messages.
