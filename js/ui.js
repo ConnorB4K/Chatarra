@@ -577,8 +577,10 @@ const UI = (() => {
 
     // Auto-resize textarea
     $chatInput.addEventListener('input', () => {
-      $chatInput.style.height = 'auto';
-      $chatInput.style.height = Math.min($chatInput.scrollHeight, 120) + 'px';
+        requestAnimationFrame(() => {
+            $chatInput.style.height = 'auto';
+            $chatInput.style.height = chatInput.scrollHeight + 'px';
+        });
     });
 
     // Back button
