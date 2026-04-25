@@ -95,7 +95,7 @@ const Media = (() => {
     }
 
     const formData = new FormData();
-    formData.append('key', apiKey);
+    formData.append('key', _apiKey);
     formData.append('image', base64);
     formData.append('expiration', EXPIRATION_SECONDS);
 
