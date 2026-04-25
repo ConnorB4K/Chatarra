@@ -246,7 +246,7 @@ const UI = (() => {
 
       onReady: () => {
         chatReady = true;
-        scrollToBottom();
+        _scrollToBottom();
       }
     });
     
@@ -286,32 +286,25 @@ const UI = (() => {
   // ─── Message Rendering ──────────────────
 
   function onNewMessage(id, msg, isNew) {
-    // Cambio: renderedMessageIds -> _renderedMessageIds
     if (_renderedMessageIds.has(id)) return;
     if (Chat.isHiddenForMe(msg)) return;
 
     // Date separator
     const msgDate = new Date(msg.timestamp);
-    // Cambio: lastRenderedMsg -> _lastRenderedMsg
     if (_lastRenderedMsg) {
       const lastDate = new Date(_lastRenderedMsg.timestamp);
-      if (!isSameDay(msgDate, lastDate)) insertDateSeparator(msgDate);
+      if (!isSameDay(msgDate, lastDate)) _insertDateSeparator(msgDate); // <--- Aquí
     } else {
-      insertDateSeparator(msgDate);
+      _insertDateSeparator(msgDate); // <--- Aquí
     }
 
-    // Cambio: lastRenderedMsg -> _lastRenderedMsg
     const isFirstInGroup = !_lastRenderedMsg || _lastRenderedMsg.uid !== msg.uid;
-    
-    // Cambio: renderedMessageIds -> _renderedMessageIds
     _renderedMessageIds.add(id);
     const el = createMessageElement(id, msg, isFirstInGroup);
-    
-    // Cambio: chatMessages -> $chatMessages
     $chatMessages.appendChild(el);
-    scrollToBottom();
     
-    // Cambio: lastRenderedMsg -> _lastRenderedMsg
+    _scrollToBottom(); // <--- Aquí
+    
     _lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
 
     // Solo para mensajes nuevos (no historial)
@@ -328,7 +321,12 @@ const UI = (() => {
 
       // Push notification
       if (msg.uid !== Auth.getUid()) {
-        sendPushToRoom(Chat.getCurrentRoom(), msg);
+        // En ui.js la variable notifications probablemente se llame `Notifications` 
+        // pero en tu snippet llamas a sendPushToRoom, si es un error, verifica si no era Notifications.sendPush
+        // Asumiendo que sendPushToRoom existe o es una función global:
+        if (typeof sendPushToRoom === 'function') {
+            sendPushToRoom(Chat.getCurrentRoom(), msg);
+        }
       }
     }
   }
