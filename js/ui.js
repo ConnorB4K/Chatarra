@@ -228,11 +228,25 @@ const UI = (() => {
     chatReady = false;
     Chat.listen(roomCode, {
       onMessage: onNewMessage,
-      onMessageChanged: onMessageChanged,
+
+      onMessageChanged: function(id, msg) {
+        if (Chat.isHiddenForMe(msg)) {
+          const el = chatMessages.querySelector(`[data-message-id="${id}"]`);
+          if (el) el.remove();
+          renderedMessageIds.delete(id);
+          return;
+        }
+        const existingEl = chatMessages.querySelector(`[data-message-id="${id}"]`);
+        if (existingEl) {
+          const newEl = createMessageElement(id, msg);
+          existingEl.replaceWith(newEl);
+        }
+      },
+
       onReady: () => {
         chatReady = true;
         scrollToBottom();
-      },
+      }
     });
     
     // Init swipe
