@@ -595,8 +595,9 @@ const UI = (() => {
       }
     });
 
-    // Auto-resize textarea
-    $chatInput.addEventListener('input', _autoResizeInput);
+    $chatInput.addEventListener('input', () => {
+        requestAnimationFrame(_autoResizeInput);
+    });
 
     function _autoResizeInput() {
         $chatInput.style.height = 'auto';

@@ -774,13 +774,14 @@ a {
   align-items: flex-end;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* CAMBIO: usar color sólido en lugar de glass effect */
+  background: var(--bg-surface); 
   border-top: 1px solid var(--border-glass);
   flex-shrink: 0;
   position: relative;
   z-index: 10;
+  transform: translateZ(0); /* Promover a GPU */
+  will-change: transform; /* Hint para el navegador */
 }
 
 .chat-input-attachments {
