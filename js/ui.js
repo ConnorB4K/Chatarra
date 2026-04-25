@@ -576,12 +576,12 @@ const UI = (() => {
     });
 
     // Auto-resize textarea
-    $chatInput.addEventListener('input', () => {
-        requestAnimationFrame(() => {
-            $chatInput.style.height = 'auto';
-            $chatInput.style.height = chatInput.scrollHeight + 'px';
-        });
-    });
+    $chatInput.addEventListener('input', _autoResizeInput);
+
+    function _autoResizeInput() {
+        $chatInput.style.height = 'auto';
+        $chatInput.style.height = Math.min($chatInput.scrollHeight, 120) + 'px';
+    }
 
     // Back button
     document.getElementById('btn-back').addEventListener('click', leaveRoom);
