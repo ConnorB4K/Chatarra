@@ -1,11 +1,3 @@
-/* ============================================
-   CHATARRA — App Entry Point
-   Firebase initialization & bootstrap
-   ============================================ */
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
 // ─── ImgBB Configuration ────────────────
 // Replace with your ImgBB API key (https://api.imgbb.com/)
 const IMGBB_API_KEY = '3c7ef353cae8ffc2d117d866c7c499fe';
