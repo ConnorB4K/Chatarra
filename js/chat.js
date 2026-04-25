@@ -18,37 +18,37 @@ const Chat = (() => {
    * @param {Object} callbacks - { onMessage, onMessageChanged, onMessageRemoved }
    */
   function listen(roomCode, callbacks) {
-    // Clean up previous listeners
     stopListening();
+    currentRoom = roomCode;
+    messagesRef = db.ref(`rooms/${roomCode}/messages`);
+    messages = {};
 
-    _currentRoom = roomCode;
-    _messagesRef = db().ref(`rooms/${roomCode}/messages`);
-    _messages = {};
+    let initialLoadDone = false;
 
-    // Listen for new/existing messages
-    const addedRef = _messagesRef.orderByChild('timestamp');
-    addedRef.on('child_added', (snapshot) => {
+    const addedRef = messagesRef.orderByChild('timestamp');
+
+    addedRef.on('child_added', snapshot => {
       const msg = snapshot.val();
       const id = snapshot.key;
-      _messages[id] = msg;
-
+      messages[id] = msg;
       if (callbacks.onMessage) {
-        callbacks.onMessage(id, msg);
+        callbacks.onMessage(id, msg, initialLoadDone);
       }
     });
-    _listeners.push({ ref: addedRef, event: 'child_added' });
+    listeners.push({ ref: addedRef, event: 'child_added' });
 
-    // Listen for message edits (hiddenBy, editedAt, content changes)
-    addedRef.on('child_changed', (snapshot) => {
+    addedRef.once('value', () => {
+      initialLoadDone = true;
+      if (callbacks.onReady) callbacks.onReady();
+    });
+
+    addedRef.on('child_changed', snapshot => {
       const msg = snapshot.val();
       const id = snapshot.key;
-      _messages[id] = msg;
-
-      if (callbacks.onMessageChanged) {
-        callbacks.onMessageChanged(id, msg);
-      }
+      messages[id] = msg;
+      if (callbacks.onMessageChanged) callbacks.onMessageChanged(id, msg);
     });
-    _listeners.push({ ref: addedRef, event: 'child_changed' });
+    listeners.push({ ref: addedRef, event: 'child_changed' });
   }
 
   /**

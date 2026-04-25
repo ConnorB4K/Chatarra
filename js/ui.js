@@ -36,7 +36,10 @@ const UI = (() => {
   let $themeModal = null;
   let _isMuted = localStorage.getItem('chatarra_muted') === 'true';
   let _audioUnlocked = false;
+  const _notificationSfx = new Audio('./assets/sounds/notification.wav');
+  _notificationSfx.volume = 0.5;
   let _audioCache = {};
+  let chatReady = false;
 
   // ─── Theme Definitions ─────────────────
   const THEMES = [
@@ -222,11 +225,16 @@ const UI = (() => {
     $chatHeaderCode.textContent = roomCode;
 
     // Start listening
+    chatReady = false;
     Chat.listen(roomCode, {
-      onMessage: _onNewMessage,
-      onMessageChanged: _onMessageChanged,
+      onMessage: onNewMessage,
+      onMessageChanged: onMessageChanged,
+      onReady: () => {
+        chatReady = true;
+        scrollToBottom();
+      },
     });
-
+    
     // Init swipe
     Swipe.init($chatMessages, _onSwipeReply);
 
@@ -262,40 +270,31 @@ const UI = (() => {
 
   // ─── Message Rendering ──────────────────
 
-  function _onNewMessage(id, msg) {
-    if (_renderedMessageIds.has(id)) return;
+  function onNewMessage(id, msg, isNew) {
+    if (renderedMessageIds.has(id)) return;
 
-    // Skip hidden messages
     if (Chat.isHiddenForMe(msg)) return;
 
-    // Date separator
     const msgDate = new Date(msg.timestamp);
-    if (_lastRenderedMsg) {
-      const lastDate = new Date(_lastRenderedMsg.timestamp);
-      if (!_isSameDay(msgDate, lastDate)) {
-        _insertDateSeparator(msgDate);
-      }
+    if (lastRenderedMsg) {
+      const lastDate = new Date(lastRenderedMsg.timestamp);
+      if (!isSameDay(msgDate, lastDate)) insertDateSeparator(msgDate);
     } else {
-      _insertDateSeparator(msgDate);
+      insertDateSeparator(msgDate);
     }
 
-    // Is this the first message in a consecutive group from this sender?
-    const isFirstInGroup = !_lastRenderedMsg || _lastRenderedMsg.uid !== msg.uid;
+    const isFirstInGroup = !lastRenderedMsg || lastRenderedMsg.uid !== msg.uid;
+    renderedMessageIds.add(id);
+    const el = createMessageElement(id, msg, isFirstInGroup);
+    chatMessages.appendChild(el);
+    scrollToBottom();
+    lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
 
-    _renderedMessageIds.add(id);
-    const el = _createMessageElement(id, msg, isFirstInGroup);
-    $chatMessages.appendChild(el);
-    _scrollToBottom();
-
-    _lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
-
-    // Play sound if it's from someone else
-    if (msg.uid !== Auth.getUid()) {
-      _playNotificationSound();
+    if (isNew && msg.uid !== Auth.getUid()) {
+      playNotificationSound();
     }
-    
-    if (msg.uid !== Auth.getUid()) {
-        sendPushToRoom(Chat.getCurrentRoom(), msg);
+    if (isNew && msg.uid !== Auth.getUid()) {
+      sendPushToRoom(Chat.getCurrentRoom(), msg);
     }
   }
   
@@ -973,9 +972,8 @@ const UI = (() => {
     if (_isMuted) return;
     if (!_audioUnlocked) return;
 
-    const sfx = new Audio('./assets/sounds/notification.wav');
-    sfx.volume = 0.5;
-    sfx.play().catch(() => {});
+    _notificationSfx.currentTime = 0;
+    _notificationSfx.play().catch(() => {});
   }
 
   function _playAudioPreset(filename) {
