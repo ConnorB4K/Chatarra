@@ -236,10 +236,10 @@ const UI = (() => {
           _renderedMessageIds.delete(id);
           return;
         }
-
         const existingEl = $chatMessages.querySelector(`[data-message-id="${id}"]`);
         if (existingEl) {
-          const newEl = createMessageElement(id, msg);
+          // Asegúrate de usar el guion bajo aquí
+          const newEl = _createMessageElement(id, msg); 
           existingEl.replaceWith(newEl);
         }
       },
@@ -255,9 +255,6 @@ const UI = (() => {
 
     // Auto-resize input
     $chatInput.focus();
-
-    // Try to init FCM
-    _initNotifications(roomCode);
 
     // Scroll to bottom
     _scrollToBottom();
@@ -293,18 +290,19 @@ const UI = (() => {
     const msgDate = new Date(msg.timestamp);
     if (_lastRenderedMsg) {
       const lastDate = new Date(_lastRenderedMsg.timestamp);
-      if (!isSameDay(msgDate, lastDate)) _insertDateSeparator(msgDate); // <--- Aquí
+      if (!isSameDay(msgDate, lastDate)) _insertDateSeparator(msgDate);
     } else {
-      _insertDateSeparator(msgDate); // <--- Aquí
+      _insertDateSeparator(msgDate);
     }
 
     const isFirstInGroup = !_lastRenderedMsg || _lastRenderedMsg.uid !== msg.uid;
     _renderedMessageIds.add(id);
-    const el = createMessageElement(id, msg, isFirstInGroup);
+    
+    // Asegúrate de usar el guion bajo aquí
+    const el = _createMessageElement(id, msg, isFirstInGroup);
+    
     $chatMessages.appendChild(el);
-    
-    _scrollToBottom(); // <--- Aquí
-    
+    _scrollToBottom();
     _lastRenderedMsg = { uid: msg.uid, timestamp: msg.timestamp };
 
     // Solo para mensajes nuevos (no historial)
@@ -316,17 +314,7 @@ const UI = (() => {
 
       // Auto-reproducir audio preset para TODOS los presentes
       if (msg.type === 'audio') {
-        playAudioPreset(msg.content);
-      }
-
-      // Push notification
-      if (msg.uid !== Auth.getUid()) {
-        // En ui.js la variable notifications probablemente se llame `Notifications` 
-        // pero en tu snippet llamas a sendPushToRoom, si es un error, verifica si no era Notifications.sendPush
-        // Asumiendo que sendPushToRoom existe o es una función global:
-        if (typeof sendPushToRoom === 'function') {
-            sendPushToRoom(Chat.getCurrentRoom(), msg);
-        }
+        playAudioPreset(msg.content); // <- Asegúrate de que playAudioPreset exista o tenga guion bajo
       }
     }
   }
