@@ -314,7 +314,7 @@ const UI = (() => {
 
       // Auto-reproducir audio preset para TODOS los presentes
       if (msg.type === 'audio') {
-        playAudioPreset(msg.content); // <- Asegúrate de que playAudioPreset exista o tenga guion bajo
+        _playAudioPreset(msg.content); // <- Asegúrate de que playAudioPreset exista o tenga guion bajo
       }
     }
   }
