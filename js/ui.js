@@ -371,6 +371,7 @@ const UI = (() => {
     } else {
        $chatMessages.appendChild(el);
     }
+  }
   
   async function sendPushToRoom(roomCode, msg) {
       const sender = msg.nickname || 'Anónimo';
