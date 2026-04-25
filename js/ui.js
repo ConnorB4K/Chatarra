@@ -287,7 +287,7 @@ const UI = (() => {
     $chatInput.value = '';
     _clearReply();
 
-    const lastRoom = Chat.getLastRoom();
+    const lastRoom = Auth.getLastRoom();
     if (lastRoom) {
       _showRejoinShortcut(lastRoom);
     }
