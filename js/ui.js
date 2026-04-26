@@ -746,13 +746,19 @@ const UI = (() => {
     $chatInput.value = '';
     $chatInput.style.height = 'auto';
 
+    // 1. Capturar el valor exacto antes de limpiar la interfaz
+    const currentReplyId = _replyToId;
+    
+    // 2. Limpiar visualmente de inmediato para mejor experiencia
+    _clearReply();
+
     try {
       await Chat.sendMessage(room, {
         type: 'text',
         content: text,
-        replyTo: _replyToId,
+        // 3. Pasar el ID capturado
+        replyTo: currentReplyId,
       });
-      _clearReply();
     } catch (err) {
       console.error(err);
       showToast('Error al enviar');
