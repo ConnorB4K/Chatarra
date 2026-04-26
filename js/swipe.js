@@ -74,17 +74,8 @@ const Swipe = (() => {
 
     if (!_isHorizontal) return;
 
-    // Only allow right swipe for "other" messages and left swipe for "own" messages
-    const isOwn = _currentEl.classList.contains('own');
-    let effectiveDelta;
-
-    if (isOwn) {
-      // Own messages: swipe LEFT (negative delta) triggers reply
-      effectiveDelta = Math.min(0, Math.max(-MAX_SWIPE, deltaX));
-    } else {
-      // Other messages: swipe RIGHT (positive delta) triggers reply
-      effectiveDelta = Math.max(0, Math.min(MAX_SWIPE, deltaX));
-    }
+    // Allow right swipe for ALL messages
+    let effectiveDelta = Math.max(0, Math.min(MAX_SWIPE, deltaX));
 
     if (effectiveDelta === 0) return;
 
