@@ -81,7 +81,7 @@ const Media = (() => {
   const EXPIRATION_SECONDS = 864000;
 
   async function uploadImage(file) {
-    if (!apiKey) throw new Error('ImgBB API key not configured');
+    if (!_apiKey) throw new Error('ImgBB API key not configured');
 
     let base64;
 
@@ -116,7 +116,7 @@ const Media = (() => {
    * Check if ImgBB is configured.
    */
   function isConfigured() {
-    return _apiKey && _apiKey !== 'YOUR_IMGBB_API_KEY';
+    return _apiKey !== null && _apiKey !== "";
   }
 
   return {
