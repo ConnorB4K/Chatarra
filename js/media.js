@@ -87,11 +87,11 @@ const Media = (() => {
 
     if (file.type === 'image/gif') {
       // Los GIFs NO se comprimen: el canvas destruye la animación
-      base64 = await blobToBase64(file);
+      base64 = await _blobToBase64(file);
     } else {
       // Imágenes estáticas: comprimir normalmente
-      const compressed = await compressImage(file);
-      base64 = await blobToBase64(compressed);
+      const compressed = await _compressImage(file);
+      base64 = await _blobToBase64(compressed); 
     }
 
     const formData = new FormData();
